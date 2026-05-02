@@ -1,0 +1,381 @@
+@import './base.css';
+
+/* Contenido de Ionic */
+
+ion-content.ion-padding {
+  --padding-top: 25px !important;
+  --padding-bottom: 25px !important;
+  --padding-start: 40px !important;
+  --padding-end: 40px !important;
+}
+
+/* Títulos */
+
+.eyebrow {
+  margin: var(--space-2) 0 var(--space-1);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: #6b7280;
+}
+
+.title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 2rem;
+  line-height: 1.05;
+  color: var(--primary);
+}
+
+/* Tarjetas */
+.card,
+.card-base {
+  padding: var(--space-4);
+  background: var(--surface-container-lowest);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-floating);
+}
+
+.auth-card {
+  width: min(440px, 92vw);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 35px;
+  text-align: center;
+}
+
+.auth-card-wide {
+  width: min(600px, 92vw);
+}
+
+/* Layouts */
+.page {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+}
+
+.page-auth {
+  padding: var(--space-8) var(--space-4);
+}
+
+/* Tipografía auth */
+.heading-auth {
+  margin-bottom: -1.5rem;
+  font-family: var(--font-display);
+  font-size: 1.75rem;
+  color: var(--primary);
+}
+
+.sub-auth {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #6a7280;
+}
+
+.brand-auth {
+  font-weight: 600;
+  color: var(--primary);
+}
+
+/* Botones base (no ion-button, sino .btn base para elementos HTML) */
+.btn {
+  border: 0;
+  cursor: pointer;
+  font: inherit;
+  transition: var(--transition-fast);
+}
+
+.btn:hover {
+  opacity: 0.8;
+}
+
+.btn-primary {
+  flex: 1;
+  border-radius: var(--radius-md);
+  background: var(--primary);
+  color: var(--on-primary);
+  font-family: var(--font-display);
+  font-weight: 600;
+  display: block;
+}
+
+.btn-secondary {
+  flex: 1;
+  border-radius: var(--radius-md);
+  background: #e5e7eb;
+  color: #111827;
+  font-weight: 600;
+}
+
+.btn-primary:disabled,
+.btn-secondary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Ionic button overrides */
+ion-button.btn-primary,
+ion-button.btn-secondary {
+  --border-radius: var(--radius-md);
+  --padding-top: 18px;
+  --padding-bottom: 18px;
+  --padding-start: 18px;
+  --padding-end: 18px;
+  --box-shadow: none;
+  margin: 0;
+  text-transform: none;
+  letter-spacing: normal;
+  transition: var(--transition-fast);
+}
+
+ion-button.btn-primary {
+  --background: var(--primary);
+  --color: var(--on-primary);
+  font-family: var(--font-display);
+  font-weight: 600;
+}
+
+ion-button.btn-primary:hover {
+  opacity: 0.8;
+}
+
+ion-button.btn-secondary {
+  --background: #e5e7eb;
+  --color: #111827;
+  font-weight: 600;
+}
+
+/* Campos de formulario */
+.field {
+  text-align: left;
+  margin-bottom: var(--space-3);
+  flex: 1;
+}
+
+.field label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 500;
+  margin-bottom: var(--space-2);
+}
+
+.input-wrap {
+  display: flex;
+  align-items: center;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--outline-variant);
+  border-radius: var(--radius-md);
+  background: var(--surface-container-lowest);
+  transition: border-color var(--transition-fast);
+}
+
+.input-wrap:focus-within {
+  border-color: var(--secondary);
+  outline: 2px solid rgba(0, 108, 79, 0.15);
+}
+
+.input-wrap--error {
+  border-color: rgba(220, 38, 38, 0.6) !important;
+}
+
+.input-wrap--error:focus-within {
+  border-color: rgba(220, 38, 38, 0.6);
+  outline: 2px solid rgba(220, 38, 38, 0.15);
+}
+
+.input-wrap input {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;
+  padding: 12px 0;
+  font: inherit;
+  font-size: 0.9rem;
+}
+
+/* Layout de filas */
+.row-fields {
+  display: flex;
+  gap: 12px;
+}
+
+.row-fields .field {
+  width: 0;
+  flex: 1;
+}
+
+.row-between {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-3);
+}
+
+.row-between a {
+  font-size: 0.9rem;
+}
+
+.row-check {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+/* Utilidades */
+.textLink,
+button {
+  border: 0;
+  cursor: pointer;
+  font: inherit;
+  transition: var(--transition-fast);
+}
+
+button:hover {
+  opacity: 0.8;
+}
+
+.section-title {
+  margin: 0 0 var(--space-3);
+  text-align: left;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.error-message {
+  color: #e74c3c;
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+  min-height: 1rem;
+}
+
+.hint {
+  margin-top: var(--space-1);
+  font-size: 0.8rem;
+  color: #6b7280;
+  text-align: left;
+}
+
+/* Form containers */
+.step,
+.address-form {
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+/* Grids Dashboard */
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  margin-bottom: 20px;
+  gap: 14px;
+}
+
+.contentGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.7fr) minmax(300px, 0.9fr);
+  gap: 24px;
+}
+
+.panel {
+  padding: 20px;
+}
+
+.pillButton {
+  height: 36px;
+  padding: 0 12px;
+  border-radius: 12px;
+  background: #e8e8ea;
+  color: #425466;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* Icons */
+.search-icon {
+  position: absolute;
+  top: 50%;
+  left: 14px;
+  width: 16px;
+  height: 16px;
+  color: #6b7280;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+/* Transiciones */
+.slide-down-enter-active,
+.slide-down-leave-active {
+  transition: all 0.25s ease;
+  overflow: hidden;
+}
+
+.slide-down-enter-from,
+.slide-down-leave-to {
+  opacity: 0;
+  max-height: 0;
+  transform: translateY(-6px);
+}
+
+.slide-down-enter-to,
+.slide-down-leave-from {
+  opacity: 1;
+  max-height: 600px;
+}
+
+/* Server state */
+.server-state {
+  text-align: center;
+  color: #6b7280;
+}
+
+/* Responsive main.css */
+@media (max-width: 1024px) {
+  .statsGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .contentGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  ion-content.ion-padding {
+    --padding-start: 20px !important;
+    --padding-end: 20px !important;
+  }
+
+  .statsGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .page-auth {
+    padding: 0 10px;
+    min-height: auto;
+  }
+
+  .auth-card,
+  .auth-card-wide {
+    padding: 24px 20px;
+    width: 100%;
+  }
+
+  .heading-auth {
+    font-size: 1.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .page-auth {
+    padding: 16px;
+  }
+}
