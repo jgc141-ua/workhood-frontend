@@ -114,7 +114,7 @@ const brand = inject('BRAND')
       </section>
 
       <section class="contentGrid">
-        <div class="mainColumn">
+        <div>
           <section class="card panel">
             <div class="header">
               <div>

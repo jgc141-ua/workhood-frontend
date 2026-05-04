@@ -301,7 +301,6 @@ onMounted(async () => {
 
 .members-user {
   gap: var(--space-3);
-  min-width: 0;
 }
 
 .members-avatar {

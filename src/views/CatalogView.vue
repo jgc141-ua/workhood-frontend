@@ -40,6 +40,16 @@ function handleMembershipAction(membership, option) {
     }
 }
 
+function handleBenefitAction(benefit, option) {
+    if (option.action === 'delete') {
+        // TODO: implementar llamada al store para eliminar beneficio
+        console.log('Eliminar beneficio:', benefit.id)
+    } else if (option.action === 'edit') {
+        // TODO: implementar llamada al store para editar beneficio
+        console.log('Editar beneficio:', benefit.id)
+    }
+}
+
 // Modal añadir
 const isAddModalOpen = ref(false)
 const openAddModal = () => { isAddModalOpen.value = true }
@@ -91,10 +101,10 @@ const addResource = () => {
             </AppModal>
 
             <section class="contentGrid">
-                <div class="mainColumn">
+                <div>
                     <h2 class="section-title">Membresías Activas</h2>
 
-                    <DataTable class="memberships-table" :columns="[{ key: 'plan', label: 'MEMBRESÍAS', width: '1fr' }]"
+                    <DataTable class="membership-table" :columns="[{ key: 'plan', label: 'MEMBRESÍAS', width: '1fr' }]"
                         :items="membershipStore.paginatedMemberships" key-field="idx" variant="list"
                         :pagination="{ page: membershipStore.page, pageSize: membershipStore.pageSize, total: membershipStore.count }"
                         @prev-page="membershipStore.setPage(membershipStore.page - 1)"
@@ -129,19 +139,22 @@ const addResource = () => {
 
                 <aside>
                     <h2 class="section-title">Beneficios</h2>
-                    <DataTable class="benefits-datatable"
-                        :columns="[{ key: 'benefit', label: 'BENEFICIO', width: '1fr' }]"
+                    <DataTable class="benefits-table" :columns="[{ key: 'benefit', label: 'BENEFICIO', width: '1fr' }]"
                         :items="benefitStore.paginatedBenefits" key-field="idx" variant="list"
                         :pagination="{ page: benefitStore.page, pageSize: benefitStore.pageSize, total: benefitStore.count }"
                         @prev-page="benefitStore.setPage(benefitStore.page - 1)"
                         @next-page="benefitStore.setPage(benefitStore.page + 1)">
                         <template #row="{ item }">
-                            <div class="benefits-table">
+                            <div class="benefits-text">
                                 <h4 class="benefits-name">{{ item.name }}</h4>
                                 <p class="benefits-description">{{ item.description }}</p>
                             </div>
-                            <div class="pill-button" v-if="item.quantity != null">{{ item.quantity }} horas</div>
-                            <div class="pill-button" v-else>Ilimitado</div>
+                            <div class="benefits-more-actions">
+                                <div class="pill-button" v-if="item.quantity != null">{{ item.quantity }} horas</div>
+                                <div class="pill-button" v-else>Ilimitado</div>
+                                <MoreActionsButton :options="moreActionsOpts"
+                                    @select="(opt) => handleBenefitAction(item, opt)" />
+                            </div>
                         </template>
                     </DataTable>
                 </aside>
@@ -173,33 +186,34 @@ const addResource = () => {
 .top-actions-modal {
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: var(--space-4);
 }
 
-.memberships-table {
-    padding: 20px;
-    padding-bottom: 0;
+.membership-table {
+    padding: 0 0 0 0;
 }
 
-.memberships-table :deep(.data-table-list) {
+.membership-table :deep(.data-table-list) {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: var(--space-5);
-    padding: 13px;
+    padding: var(--space-5);
 }
 
-.memberships-table :deep(.data-table-list-item) {
+.membership-table :deep(.data-table-list-item) {
     border-top: 0;
     padding: 0;
-    padding-bottom: 20px;
+    min-width: 0;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .membership-card {
     width: 100%;
-    padding: var(--space-5);
     display: flex;
     flex-direction: column;
     justify-content: space-between;
+    box-sizing: border-box;
     box-shadow: none;
     border: 1px solid var(--outline-variant);
     border-radius: var(--radius-md);
@@ -210,6 +224,8 @@ const addResource = () => {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: var(--space-2);
+    min-width: 0;
 }
 
 .membership-card-body h3 {
@@ -217,12 +233,14 @@ const addResource = () => {
     font-size: 1.25rem;
     line-height: 1.2;
     color: var(--on-surface);
+    overflow-wrap: break-word;
 }
 
 .membership-card-body p {
     margin: 0;
     font-size: 0.95rem;
     color: #6b7280;
+    overflow-wrap: break-word;
 }
 
 .membership-card-footer {
@@ -232,39 +250,48 @@ const addResource = () => {
     gap: var(--space-4);
     flex-wrap: wrap;
     margin-top: var(--space-4);
+    min-width: 0;
 }
 
-.benefits-datatable {
-    padding-top: 0;
-}
-
-.benefits-datatable :deep(.data-table-list-item:first-child) {
+.benefits-table :deep(.data-table-list-item:first-child) {
     padding-top: 10px;
 }
 
-.benefits-table {
+.benefits-text {
     display: flex;
     flex-direction: column;
     justify-content: space-between;
     padding-left: 10px;
+    min-width: 0;
+    overflow-wrap: break-word;
 }
 
 .benefits-name {
-    margin-bottom: 4px;
+    margin: 0;
     font-size: 17px;
     font-weight: 600;
+    overflow-wrap: break-word;
 }
 
 .benefits-description {
     margin: 0;
     color: #555;
     font-size: 14px;
+    overflow-wrap: break-word;
+}
+
+.benefits-more-actions {
+    display: flex;
+    gap: var(--space-2);
+    align-items: center;
 }
 
 .price {
     display: flex;
     align-items: baseline;
     gap: 4px;
+    flex-wrap: wrap;
+    min-width: 0;
 }
 
 .price-amount {
@@ -281,6 +308,7 @@ const addResource = () => {
 .membership-meta {
     font-size: 0.9rem;
     color: #6b7280;
+    overflow-wrap: break-word;
 }
 
 .resources {
@@ -299,11 +327,19 @@ const addResource = () => {
     margin-top: 40px;
 }
 
+@media (max-width: 1400px) {
+    .benefits-table :deep(.data-table-pagination) {
+        text-align: center;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+    }
+}
+
 @media (max-width: 1200px) {
     .contentGrid {
         grid-template-columns: 1fr;
     }
-
 }
 
 @media (max-width: 991.98px) {
@@ -319,12 +355,7 @@ const addResource = () => {
 }
 
 @media (max-width: 600px) {
-    .membership-card {
-        padding: var(--space-4);
-        min-height: auto;
-    }
-
-    .memberships-table :deep(.data-table-list) {
+    .membership-table :deep(.data-table-list) {
         grid-template-columns: repeat(1, minmax(0, 1fr));
     }
 

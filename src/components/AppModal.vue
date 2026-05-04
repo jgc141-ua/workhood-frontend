@@ -11,22 +11,22 @@ defineEmits(['close'])
 
 <template>
     <ion-modal :is-open="show" @did-dismiss="$emit('close')" class="app-modal">
-        <div class="card-base app-modal__box">
+        <div class="card-base app-modal-box">
             <ion-header class="ion-no-border">
                 <ion-toolbar>
-                    <div class="row-between app-modal__head">
-                        <h2 v-if="title" class="heading-auth app-modal__title">{{ title }}</h2>
-                        <button class="app-modal__close" @click="$emit('close')" aria-label="Cerrar modal">✕</button>
+                    <div class="row-between app-modal-head">
+                        <h2 v-if="title" class="app-modal-title">{{ title }}</h2>
+                        <button class="app-modal-close" @click="$emit('close')" aria-label="Cerrar modal">✕</button>
                     </div>
                 </ion-toolbar>
             </ion-header>
 
-            <div class="app-modal__body">
+            <div class="app-modal-body">
                 <slot />
             </div>
 
             <ion-footer v-if="$slots.footer" class="ion-no-border">
-                <div class="app-modal__footer">
+                <div class="app-modal-footer">
                     <slot name="footer" />
                 </div>
             </ion-footer>
@@ -69,7 +69,7 @@ ion-modal.app-modal ion-footer {
     background: transparent;
 }
 
-.app-modal__box {
+.app-modal-box {
     width: min(600px, 92vw);
     max-height: min(85vh, 600px);
     padding: 0;
@@ -79,18 +79,18 @@ ion-modal.app-modal ion-footer {
     overflow: hidden;
 }
 
-.app-modal__head {
+.app-modal-head {
     margin-bottom: 0;
     padding: var(--space-4);
     border-bottom: 1px solid var(--outline-variant);
 }
 
-.app-modal__title {
+.app-modal-title {
     margin: 0;
     text-align: left;
 }
 
-.app-modal__close {
+.app-modal-close {
     width: 34px;
     height: 34px;
     border-radius: 50%;
@@ -103,13 +103,13 @@ ion-modal.app-modal ion-footer {
     flex-shrink: 0;
 }
 
-.app-modal__body {
+.app-modal-body {
     padding: var(--space-4);
     overflow-y: auto;
     background: var(--surface-container-lowest);
 }
 
-.app-modal__footer {
+.app-modal-footer {
     display: flex;
     justify-content: flex-end;
     gap: var(--space-3);
@@ -119,13 +119,13 @@ ion-modal.app-modal ion-footer {
 }
 
 @media (max-width: 600px) {
-    .app-modal__box {
+    .app-modal-box {
         width: 100%;
     }
 
-    .app-modal__head,
-    .app-modal__body,
-    .app-modal__footer {
+    .app-modal-head,
+    .app-modal-body,
+    .app-modal-footer {
         padding: 20px;
     }
 }

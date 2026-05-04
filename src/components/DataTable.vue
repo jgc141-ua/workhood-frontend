@@ -84,38 +84,40 @@ const canNext = computed(() => {
   </div>
 
   <div class="card table-card" v-else>
-    <!-- Grid variant -->
-    <template v-if="variant === 'grid'">
-      <div class="data-table">
-        <div class="data-table-head" :style="{ gridTemplateColumns }">
-          <div v-for="col in columns" :key="col.key">{{ col.label }}</div>
-        </div>
-
-        <div v-for="(item, index) in items" :key="getItemKey(item, index)" class="data-table-row"
-          :style="{ gridTemplateColumns }">
-          <div v-for="col in columns" :key="col.key">
-            <slot :name="`cell-${col.key}`" :item="item" :index="index">
-              {{ item[col.key] }}
-            </slot>
+    <div class="table-scroll-area" :class="{ 'table-scroll-overflow': variant === 'grid' }">
+      <!-- Grid variant -->
+      <template v-if="variant === 'grid'">
+        <div class="data-table">
+          <div class="data-table-head" :style="{ gridTemplateColumns }">
+            <div v-for="col in columns" :key="col.key">{{ col.label }}</div>
           </div>
-        </div>
-      </div>
-    </template>
 
-    <!-- List variant -->
-    <template v-if="variant === 'list'">
-      <div class="data-table-list">
-        <div v-for="(item, index) in items" :key="getItemKey(item, index)" class="data-table-list-item">
-          <slot name="row" :item="item" :index="index">
+          <div v-for="(item, index) in items" :key="getItemKey(item, index)" class="data-table-row"
+            :style="{ gridTemplateColumns }">
             <div v-for="col in columns" :key="col.key">
               <slot :name="`cell-${col.key}`" :item="item" :index="index">
                 {{ item[col.key] }}
               </slot>
             </div>
-          </slot>
+          </div>
         </div>
-      </div>
-    </template>
+      </template>
+
+      <!-- List variant -->
+      <template v-if="variant === 'list'">
+        <div class="data-table-list">
+          <div v-for="(item, index) in items" :key="getItemKey(item, index)" class="data-table-list-item">
+            <slot name="row" :item="item" :index="index">
+              <div v-for="col in columns" :key="col.key">
+                <slot :name="`cell-${col.key}`" :item="item" :index="index">
+                  {{ item[col.key] }}
+                </slot>
+              </div>
+            </slot>
+          </div>
+        </div>
+      </template>
+    </div>
 
     <div v-if="paginationInfo" class="data-table-pagination">
       <p class="data-table-pagination-info">
@@ -151,7 +153,6 @@ const canNext = computed(() => {
   align-items: center;
   gap: var(--space-4);
   padding: var(--space-4) var(--space-3);
-  border-top: 1px solid var(--outline-variant);
 }
 
 .data-table-pagination-info {
@@ -193,31 +194,30 @@ const canNext = computed(() => {
   cursor: not-allowed;
 }
 
-@media (max-width: 600px) {
-  .data-table-pagination {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .data-table-pagination-controls {
-    justify-content: space-between;
-  }
-
-  .data-table-pagination-current {
-    text-align: center;
-    flex: 1;
-  }
-}
-
 .table-card {
-  overflow-x: auto;
+  width: 100%;
+  min-width: 0;
   padding: var(--space-3);
   padding-bottom: 0;
+}
+
+.table-scroll-area {
+  width: 100%;
+  min-width: 0;
+}
+
+.table-scroll-overflow {
+  overflow-x: auto;
 }
 
 .data-table {
   width: 100%;
   min-width: 600px;
+}
+
+.data-table-list {
+  width: 100%;
+  min-width: 0;
 }
 
 .data-table-head,
@@ -251,19 +251,37 @@ const canNext = computed(() => {
 .data-table-list {
   display: flex;
   flex-direction: column;
+  border-bottom: 1px solid var(--outline-variant);
 }
 
 .data-table-list-item {
   display: flex;
   justify-content: space-between;
   gap: var(--space-4);
-  align-items: center;
   padding: var(--space-4) 0;
   border-top: 1px solid var(--outline-variant);
+  min-width: 0;
 }
 
 .data-table-list-item:first-child {
   border-top: 0;
   padding-top: 0;
+}
+
+.data-table-row:last-child {
+  border-bottom: 1px solid var(--outline-variant);
+}
+
+@media (max-width: 600px) {
+  .data-table-list-item {
+    gap: var(--space-3);
+  }
+
+  .data-table-pagination {
+    text-align: center;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+  }
 }
 </style>
