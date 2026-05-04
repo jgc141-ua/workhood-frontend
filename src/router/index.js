@@ -11,6 +11,7 @@ import TermsView from '../views/TermsView.vue'
 import MyProfileView from '../views/MyProfileView.vue'
 import { useAuthStore } from '@/stores/authStore.js'
 import { useMeStore } from '@/stores/meStore.js'
+import CatalogView from '@/views/CatalogView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -44,6 +45,12 @@ const router = createRouter({
       meta: { requiresAuth: true },
       component: MainLayout,
       children: [{ path: '', name: 'profile', component: MyProfileView }],
+    },
+    {
+      path: '/catalog',
+      meta: { requiresAuth: true, requiresRole: 'ADMIN' },
+      component: MainLayout,
+      children: [{ path: '', name: 'catalog', component: CatalogView }],
     },
     {
       path: '/login',

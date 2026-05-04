@@ -40,7 +40,7 @@ export function createEmptyPhoneData() {
   return { phoneCode: '', phone: '' }
 }
 
-/* Parsea un numero completo (+34 600 000 000) en codigo + numero */
+/* Parsea un numero completo (+34 600000000) en { phoneCode, phone } */
 export function parseUserPhone(phone) {
   if (!phone) return { phoneCode: '+34', phone: '' }
   if (phone.startsWith('+')) {

@@ -4,3 +4,16 @@
         <path d="M20 20L16.65 16.65" />
     </svg>
 </template>
+
+<style scoped>
+.search-icon {
+  position: absolute;
+  top: 50%;
+  left: 14px;
+  width: 16px;
+  height: 16px;
+  color: #6b7280;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+</style>

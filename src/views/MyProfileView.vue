@@ -10,6 +10,7 @@ import PasswordForm from '@/components/forms/PasswordForm.vue'
 import PrettyCheckbox from '@/components/PrettyCheckbox.vue'
 import MobileHeader from '@/components/MobileHeader.vue'
 import IconDropdown from '@/assets/icons/IconDropdown.vue'
+import { useTokenStore } from '@/stores/tokenStore'
 import {
     createEmptyForm,
     createEmptyPhoneData,
@@ -18,30 +19,38 @@ import {
     useLegalDates,
 } from '@/composables/userForm'
 
+// Stores
 const meStore = useMeStore()
 const countryPhoneStore = useCountryPhoneStore()
+const tokenStore = useTokenStore()
 
-const isPersonalValid = ref(false)
-const isAddressValid = ref(false)
-const isBillingAddressValid = ref(true)
-const isPasswordValid = ref(true)
-const isDataReady = ref(false)
-const notData = ref(false)
-
-const form = ref(createEmptyForm())
-const phoneData = ref(createEmptyPhoneData())
-
+// Estados
 const personalRef = ref(null)
 const addressRef = ref(null)
 const billingRef = ref(null)
 const passwordRef = ref(null)
 
+const isPersonalValid = ref(false)
+const isAddressValid = ref(false)
+const isBillingAddressValid = ref(true)
+const isPasswordValid = ref(true)
+
+
+const isDataReady = ref(false)
+const notData = ref(false)
 const isSaving = ref(false)
+const openSections = ref(new Set(['']))
 const originalSnapshot = ref('')
 
+// Formulario
+const form = ref(createEmptyForm())
+const phoneData = ref(createEmptyPhoneData())
+
+// Formatos de fechas y direcciones
 useBillingSync(form)
 useLegalDates(form)
 
+// Helpers
 function buildPayload() {
     const payload = {
         email: form.value.email,
@@ -77,6 +86,7 @@ function buildSnapshot() {
     return payload
 }
 
+// Cargar datos del usuario
 async function loadUserData() {
     let u = meStore.user
 
@@ -84,7 +94,7 @@ async function loadUserData() {
 
     if (!u.email) {
         try {
-            await meStore.fetchMe()
+            await meStore.fetchMe(tokenStore)
             u = meStore.user
         } catch {
             notData.value = true
@@ -114,6 +124,7 @@ async function loadUserData() {
 
 watch(() => meStore.user, loadUserData, { immediate: true })
 
+// Verificaciones
 const isFormValid = computed(() => {
     const billingOk = form.value.billing_same_as_address || isBillingAddressValid.value
     return isPersonalValid.value && isAddressValid.value && isPasswordValid.value && billingOk
@@ -124,8 +135,7 @@ const hasChanges = computed(() => {
     return JSON.stringify(buildSnapshot()) !== originalSnapshot.value
 })
 
-const openSections = ref(new Set(['']))
-
+// Secciones
 function toggleSection(key) {
     const next = new Set(openSections.value)
     if (next.has(key)) {
@@ -140,6 +150,7 @@ function isOpen(key) {
     return openSections.value.has(key)
 }
 
+// Guardar
 async function handleSave() {
     if (!isFormValid.value) {
         showToast('Revisa los campos marcados antes de guardar.')

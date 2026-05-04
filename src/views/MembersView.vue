@@ -1,19 +1,23 @@
 <script setup>
 import { ref, computed, inject, onMounted, watch } from 'vue'
 import { IonPage, IonContent } from '@ionic/vue'
-import { useMembersStore } from '@/stores/membersStore'
+import { useMembersStore } from '@/stores/memberStore'
 
 import MobileHeader from '@/components/MobileHeader.vue'
-import IconMoreActions from '@/components/icons/IconMoreActions.vue'
 import IconEdit from '@/components/icons/IconEdit.vue'
 import IconSearch from '@/components/icons/IconSearch.vue'
 import AppModal from '@/components/AppModal.vue'
 import RegisterForm from '@/components/forms/RegisterForm.vue'
 import EditMemberForm from '@/components/forms/EditMemberForm.vue'
+import DataTable from '@/components/DataTable.vue'
 import { useAuthStore } from '@/stores/authStore'
 import { showToast } from '@/composables/toast'
+import MoreActionsButton from '@/components/MoreActionsButton.vue'
+import IconTrash from '@/components/icons/IconTrash.vue'
 
 const brand = inject('BRAND')
+
+// Stores
 const auth = useAuthStore()
 const membersStore = useMembersStore()
 
@@ -65,17 +69,15 @@ const tabs = computed(() => [
 ])
 
 // Paginación
-const paginationInfo = computed(() => {
-  if (!membersStore.count) return { start: 0, end: 0, total: 0 }
-
-  const start = (membersStore.page - 1) * membersStore.pageSize + 1
-  const end = Math.min(membersStore.page * membersStore.pageSize, membersStore.count)
-
-  return { start, end, total: membersStore.count }
-})
-
 const nextPage = () => membersStore.setPage(membersStore.page + 1)
 const prevPage = () => membersStore.setPage(membersStore.page - 1)
+
+const memberColumns = [
+  { key: 'member', label: 'MIEMBRO', width: '1fr' },
+  { key: 'contact', label: 'CONTACTO', width: '1fr' },
+  { key: 'nif', label: 'NIF/CIF', width: '1fr' },
+  { key: 'actions', label: 'ACCIONES', width: '0.25fr' },
+]
 
 // Helpers
 const getInitials = (member) => {
@@ -109,6 +111,14 @@ async function handleUpdateMember(formData) {
   }
 }
 
+// Acciones del menú de "Más acciones"
+function handleMemberAction(member, option) {
+  if (option.action === 'delete') {
+    // TODO: implementar llamada al store para eliminar miembro
+    console.log('Eliminar miembro:', member.email)
+  }
+}
+
 // Carga inicial
 onMounted(async () => {
   if (membersStore.members.length) return
@@ -127,13 +137,13 @@ onMounted(async () => {
 
     <ion-content :fullscreen="true" class="ion-padding">
       <section class="members">
-        <header class="row-between members-top">
+        <header class="row-between">
           <div class="page-header">
             <p class="eyebrow">RED DE {{ brand?.toUpperCase() }}</p>
             <h1 class="title">Miembros</h1>
           </div>
 
-          <button class="btn btn-primary members-add" type="button" @click="openAddMemberModal">
+          <button class="btn btn-primary top-action" type="button" @click="openAddMemberModal">
             <span>Añadir miembro</span>
           </button>
         </header>
@@ -162,80 +172,44 @@ onMounted(async () => {
           </div>
         </section>
 
-        <div v-if="membersStore.loading" class="server-state">
-          Cargando miembros...
-        </div>
+        <DataTable :columns="memberColumns" :items="membersStore.members" key-field="id" :loading="membersStore.loading"
+          :error="membersStore.error"
+          :pagination="{ page: membersStore.page, pageSize: membersStore.pageSize, total: membersStore.count }"
+          @prev-page="prevPage" @next-page="nextPage">
 
-        <div v-else-if="membersStore.error" class="server-state">
-          Error con el servidor
-        </div>
-
-        <div v-else-if="!membersStore.members.length" class="server-state">
-          No hay miembros para mostrar.
-        </div>
-
-        <section v-else class="card members-box">
-          <div class="members-table">
-            <div class="members-head">
-              <div>MIEMBRO</div>
-              <div>CONTACTO</div>
-              <div>NIF/CIF</div>
-              <div>ACCIONES</div>
-            </div>
-
-            <div v-for="member in membersStore.members" :key="member.id" class="members-row">
-              <div class="members-user">
-                <div class="members-avatar members-avatar--fallback" aria-hidden="true">
-                  {{ getInitials(member) }}
-                </div>
-                <div class="members-user-meta">
-                  <span class="members-user-name">
-                    {{ member.first_name }} {{ member.last_name }}
-                  </span>
-                </div>
+          <template #cell-member="{ item }">
+            <div class="members-user">
+              <div class="members-avatar members-avatar--fallback" aria-hidden="true">
+                {{ getInitials(item) }}
               </div>
-
-              <div>
-                <div class="members-text">{{ member.email || '-' }}</div>
-                <div class="members-text">{{ member.phone || '-' }}</div>
-              </div>
-
-              <div class="members-text">{{ member.nif_cif || '-' }}</div>
-
-              <div class="members-actions">
-                <button type="button" class="members-action" aria-label="Editar miembro" @click="openEditMemberModal(member)">
-                  <IconEdit />
-                </button>
-                <button type="button" class="members-action" aria-label="Más acciones">
-                  <IconMoreActions />
-                </button>
+              <div class="members-user-meta">
+                <span class="members-user-name">
+                  {{ item.first_name }} {{ item.last_name }}
+                </span>
               </div>
             </div>
-          </div>
+          </template>
 
-          <div class="members-pagination">
-            <p class="members-pagination-info">
-              Mostrando {{ paginationInfo.start }}-{{ paginationInfo.end }}
-              de {{ paginationInfo.total }} miembros
-            </p>
+          <template #cell-contact="{ item }">
+            <div class="data-table-text">{{ item.email || '-' }}</div>
+            <div class="data-table-text">{{ item.phone || '-' }}</div>
+          </template>
 
-            <div class="members-pagination-controls">
-              <button type="button" class="members-page-btn"
-                :disabled="!membersStore.hasPreviousPage || membersStore.loading" @click="prevPage">
-                Anterior
+          <template #cell-nif="{ item }">
+            <div class="data-table-text">{{ item.nif_cif || '-' }}</div>
+          </template>
+
+          <template #cell-actions="{ item }">
+            <div class="members-actions">
+              <button type="button" class="btn-action" aria-label="Editar miembro" @click="openEditMemberModal(item)">
+                <IconEdit />
               </button>
-
-              <span class="members-pagination-current">
-                Página {{ membersStore.page }} de {{ membersStore.totalPages }}
-              </span>
-
-              <button type="button" class="members-page-btn"
-                :disabled="!membersStore.hasNextPage || membersStore.loading" @click="nextPage">
-                Siguiente
-              </button>
+              <MoreActionsButton :options="[
+                { icon: IconTrash, label: 'Eliminar', action: 'delete', danger: true }
+              ]" @select="(opt) => handleMemberAction(item, opt)" />
             </div>
-          </div>
-        </section>
+          </template>
+        </DataTable>
       </section>
     </ion-content>
   </ion-page>
@@ -247,26 +221,6 @@ onMounted(async () => {
   display: flex;
   flex-direction: column;
   gap: var(--space-6);
-}
-
-.members-top {
-  align-items: flex-start;
-  gap: var(--space-4);
-}
-
-.members-add {
-  flex: 0 0 auto;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-2);
-  min-height: 48px;
-  padding: 0.95rem 1.15rem;
-}
-
-.members-add-icon {
-  font-size: 1rem;
-  line-height: 1;
 }
 
 .members-bar {
@@ -345,36 +299,6 @@ onMounted(async () => {
   color: #6b7280;
 }
 
-.members-box {
-  overflow-x: auto;
-}
-
-.members-table {
-  width: 100%;
-}
-
-.members-head,
-.members-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr 0.25fr;
-  gap: var(--space-4);
-  align-items: center;
-  min-width: 920px;
-}
-
-.members-head {
-  padding: var(--space-4) var(--space-3);
-  font-size: 0.72rem;
-  font-weight: 800;
-  letter-spacing: 0.05em;
-  color: #6b7280;
-}
-
-.members-row {
-  padding: var(--space-4) var(--space-3);
-  border-top: 1px solid var(--outline-variant);
-}
-
 .members-user {
   gap: var(--space-3);
   min-width: 0;
@@ -386,12 +310,6 @@ onMounted(async () => {
   flex: 0 0 40px;
   border-radius: var(--radius-full);
   overflow: hidden;
-}
-
-.members-avatar--img img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
 }
 
 .members-avatar--fallback {
@@ -414,115 +332,13 @@ onMounted(async () => {
   color: var(--on-surface);
 }
 
-.members-text {
-  color: #4b5563;
-  font-size: 0.92rem;
-}
-
-.members-plan {
-  height: auto;
-  padding: 0.48rem 0.8rem;
-  border-radius: var(--radius-sm);
-  background: var(--surface-container-low);
-  color: #425466;
-  font-size: 0.82rem;
-  font-weight: 600;
-  gap: 0;
-}
-
 .members-actions {
   gap: var(--space-2);
 }
 
-.members-action {
-  width: 34px;
-  height: 34px;
-  border: 1px solid var(--outline-variant);
-  border-radius: var(--radius-md);
-  background: var(--surface-container-lowest);
-  color: #425466;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  transition: var(--transition-fast);
-}
-
-.members-action:hover {
-  background: var(--surface-container-low);
-}
-
-.members-action svg {
-  width: 16px;
-  height: 16px;
-}
-
-.members-pagination {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: var(--space-4);
-  padding: var(--space-4) var(--space-3);
-  border-top: 1px solid var(--outline-variant);
-}
-
-.members-pagination-info {
-  margin: 0;
-  color: #6b7280;
-  font-size: 0.9rem;
-}
-
-.members-pagination-controls {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-}
-
-.members-pagination-current {
-  color: var(--on-surface);
-  font-size: 0.92rem;
-  font-weight: 600;
-}
-
-.members-page-btn {
-  min-height: 38px;
-  padding: 0.6rem 0.9rem;
-  border: 1px solid var(--outline-variant);
-  border-radius: var(--radius-md);
-  background: var(--surface-container-lowest);
-  color: var(--on-surface);
-  font: inherit;
-  font-weight: 600;
-  transition: var(--transition-fast);
-}
-
-.members-page-btn:hover:not(:disabled) {
-  background: var(--surface-container-low);
-}
-
-.members-page-btn:disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
-}
-
-@media (max-width: 600px) {
-  .members-pagination {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .members-pagination-controls {
-    justify-content: space-between;
-  }
-
-  .members-pagination-current {
-    text-align: center;
-    flex: 1;
-  }
-}
-
 @media (max-width: 1024px) {
 
-  .members-top,
+  .row-between,
   .members-bar {
     flex-direction: column;
     align-items: stretch;
@@ -536,14 +352,6 @@ onMounted(async () => {
 @media (max-width: 600px) {
   .members {
     gap: var(--space-4);
-  }
-
-  .members-title {
-    font-size: 1.75rem;
-  }
-
-  .members-add {
-    width: 100%;
   }
 
   .members-tab {

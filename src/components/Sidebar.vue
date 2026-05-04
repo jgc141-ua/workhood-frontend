@@ -18,6 +18,8 @@ import IconProfile from '@/components/icons/IconProfile.vue'
 import IconProfileFilled from '@/components/icons/IconProfileFilled.vue'
 
 import { ref, computed, inject } from 'vue'
+import IconCatalog from './icons/IconCatalog.vue'
+import IconCatalogFilled from './icons/IconCatalogFilled.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -53,6 +55,7 @@ const items = computed(() => {
 
   if (meStore.user?.role === 'ADMIN') {
     baseItems.splice(2, 0,
+      { label: 'Catálogo', to: '/catalog', icon: IconCatalog, iconFilled: IconCatalogFilled },
       { label: 'Members', to: '/members', icon: IconMembers, iconFilled: IconMembersFilled },
       { label: 'Reports', to: '/reports', icon: IconReport, iconFilled: IconReportFilled }
     )
@@ -253,8 +256,7 @@ ion-list {
   margin: 0;
 }
 
-.nav-list,
-.footer-list {
+.nav-list {
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -419,10 +421,6 @@ ion-item.link.router-link-active::part(native) {
 
 /* Móvil: forzar menú expandido y botón de cerrar */
 @media (max-width: 991.98px) {
-  .close-btn {
-    display: none;
-  }
-
   .sidebar.collapsed {
     width: 260px;
     --padding-start: 16px;

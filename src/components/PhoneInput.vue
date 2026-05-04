@@ -21,27 +21,27 @@ const props = defineProps({
 
 const emit = defineEmits(['field-blur', 'field-input'])
 
-const store = useCountryPhoneStore()
-const { countries, selectedCountry } = storeToRefs(store)
+const countryPhoneStore = useCountryPhoneStore()
+const { countries, selectedCountry } = storeToRefs(countryPhoneStore)
 
 const isOpen = ref(false)
 
 const flagUrl = (code) => `https://flagcdn.com/24x18/${code.toLowerCase()}.png`
 
 const selectCountry = (country) => {
-    store.selectCountry(country)
+    countryPhoneStore.selectCountry(country)
     isOpen.value = false
     props.phoneData.phoneCode = country.phoneCode
     emit('field-input', 'phone')
 }
 
 onMounted(async () => {
-    await store.fetchAllCountries()
+    await countryPhoneStore.fetchAllCountries()
 })
 
 watch(() => props.phoneData.phoneCode, (phoneCode) => {
     if (phoneCode?.trim()) {
-        store.selectCountryByPhoneCode(phoneCode)
+        countryPhoneStore.selectCountryByPhoneCode(phoneCode)
     } else {
         props.phoneData.phoneCode = selectedCountry.value.phoneCode
     }

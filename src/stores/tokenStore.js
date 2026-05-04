@@ -3,6 +3,7 @@ import { ref, computed } from 'vue'
 import { ENDPOINTS } from '@/config/api'
 
 export const useTokenStore = defineStore('token', () => {
+  // State
   const accessToken = ref(
     localStorage.getItem('access') || sessionStorage.getItem('access') || null,
   )
@@ -10,8 +11,7 @@ export const useTokenStore = defineStore('token', () => {
     localStorage.getItem('refresh') || sessionStorage.getItem('refresh') || null,
   )
 
-  const isAuthenticated = computed(() => !!accessToken.value)
-
+  // Setter
   function setTokens(access, refresh, remember = false) {
     accessToken.value = access
     refreshToken.value = refresh
@@ -20,6 +20,10 @@ export const useTokenStore = defineStore('token', () => {
     storage.setItem('refresh', refresh)
   }
 
+  // Comprobar si existe access_token
+  const isAuthenticated = computed(() => !!accessToken.value)
+
+  // Actualizar el access_token
   async function refreshAccessToken() {
     if (!refreshToken.value) return false
     try {
@@ -42,6 +46,7 @@ export const useTokenStore = defineStore('token', () => {
     }
   }
 
+  // Limpiar tokens
   function clearTokens() {
     accessToken.value = null
     refreshToken.value = null

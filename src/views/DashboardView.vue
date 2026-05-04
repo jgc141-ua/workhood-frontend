@@ -121,7 +121,7 @@ const brand = inject('BRAND')
                 <h3>Revenue Growth</h3>
                 <p>Monthly recurring revenue vs ad-hoc bookings</p>
               </div>
-              <button class="pillButton" type="button">This Year <span>⌄</span></button>
+              <button class="pill-button" type="button">This Year <span>⌄</span></button>
             </div>
             <div class="chart-wrapper">
               <Bar :data="chartData" :options="chartOptions" />
@@ -129,7 +129,7 @@ const brand = inject('BRAND')
           </section>
         </div>
 
-        <aside class="sideColumn">
+        <aside>
           <div class="card panel actions" style="background-color: #e8e8ec">
             <div class="header">
               <h3>Action Required</h3>
@@ -182,16 +182,20 @@ const brand = inject('BRAND')
   font-size: 13px;
 }
 
-.mainColumn,
-.sideColumn {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
 .actions,
 .activities {
   padding-bottom: 14px;
+}
+
+.panel {
+  padding: 20px;
+}
+
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  margin-bottom: 20px;
+  gap: 14px;
 }
 
 .textLink {
@@ -208,9 +212,21 @@ const brand = inject('BRAND')
   flex-direction: column;
 }
 
+@media (max-width: 1024px) {
+  .statsGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
 @media (max-width: 991.98px) {
   .page-header {
     display: none;
+  }
+}
+
+@media (max-width: 600px) {
+  .statsGrid {
+    grid-template-columns: 1fr;
   }
 }
 </style>

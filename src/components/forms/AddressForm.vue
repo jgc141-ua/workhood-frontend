@@ -87,6 +87,7 @@ defineExpose({ verifyValidity })
         <input id="street" type="text" v-model="form.street" placeholder="Calle Mayor, 123" required
           @blur="handleBlur('street')" @input="handleInput('street')" />
       </div>
+      <span class="hint">Incluye número, piso y puerta</span>
       <div v-if="touched.street && errors.street" class="error-message">
         {{ errors.street }}
       </div>

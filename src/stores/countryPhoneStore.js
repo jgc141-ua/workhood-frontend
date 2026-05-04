@@ -65,5 +65,12 @@ export const useCountryPhoneStore = defineStore('countryPhone', () => {
     if (found) selectCountry(found)
   }
 
-  return { countries, selectedCountry, isLoaded, fetchAllCountries, selectCountry, selectCountryByPhoneCode }
+  return {
+    countries,
+    selectedCountry,
+    isLoaded,
+    fetchAllCountries,
+    selectCountry,
+    selectCountryByPhoneCode,
+  }
 })

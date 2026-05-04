@@ -51,3 +51,16 @@ async function handleRegister(formData) {
     </ion-content>
   </ion-page>
 </template>
+
+<style scoped>
+.auth-card-wide {
+  width: min(600px, 92vw);
+}
+
+@media (max-width: 600px) {
+  .auth-card-wide {
+    padding: 24px 20px;
+    width: 100%;
+  }
+}
+</style>

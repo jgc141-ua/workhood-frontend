@@ -5,21 +5,21 @@ import { useTokenStore } from './tokenStore'
 import { apiFetch } from '@/composables/apiClient'
 
 export const useMeStore = defineStore('me', () => {
+  // State
   const user = ref(
-    JSON.parse(localStorage.getItem('profile') || sessionStorage.getItem('profile') || 'null'),
+    JSON.parse(localStorage.getItem('profile') || sessionStorage.getItem('profile') || null),
   )
 
-  const tokenStore = useTokenStore()
-
-  async function fetchMe() {
+  // Obtener todos los datos del usuario
+  async function fetchMe(tokenStore) {
     const res = await apiFetch(ENDPOINTS.me, {}, tokenStore)
     const data = await res.json()
-    // Normalizar role a string (el API puede devolver un objeto {name})
-    const roleName = typeof data.role === 'string' ? data.role : data.role?.name || ''
+    const roleName = data.role?.name || ''
     data.role = roleName
     user.value = data
 
     const profile = { first_name: data.first_name, role: roleName }
+
     // Guardar en el mismo storage donde estan los tokens
     if (localStorage.getItem('refresh')) {
       localStorage.setItem('profile', JSON.stringify(profile))
@@ -28,7 +28,8 @@ export const useMeStore = defineStore('me', () => {
     }
   }
 
-  async function updateProfile(payload) {
+  // Actualizar el perfil
+  async function updateProfile(payload, tokenStore) {
     const res = await apiFetch(
       ENDPOINTS.meUpdate,
       {
@@ -44,9 +45,10 @@ export const useMeStore = defineStore('me', () => {
       throw new Error(data.detail || 'Error al actualizar el perfil.')
     }
 
-    await fetchMe()
+    await fetchMe(tokenStore)
   }
 
+  // Limpiar datos del usuario
   function clearUser() {
     user.value = null
     localStorage.removeItem('profile')

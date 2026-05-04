@@ -1,4 +1,6 @@
-const BASE = 'http://192.168.50.213:8000' // IP de mi PC
+const HOST = import.meta.env.HOST || 'http://localhost'
+const PORT = import.meta.env.PORT || '8000'
+const BASE = HOST + ':' + PORT
 
 export const ENDPOINTS = {
   login: BASE + '/accounts/login/',

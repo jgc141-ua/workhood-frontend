@@ -10,7 +10,6 @@ ion-content.ion-padding {
 }
 
 /* Títulos */
-
 .eyebrow {
   margin: var(--space-2) 0 var(--space-1);
   font-size: 0.75rem;
@@ -43,10 +42,6 @@ ion-content.ion-padding {
   gap: 20px;
   padding: 35px;
   text-align: center;
-}
-
-.auth-card-wide {
-  width: min(600px, 92vw);
 }
 
 /* Layouts */
@@ -113,6 +108,44 @@ ion-content.ion-padding {
 .btn-secondary:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+.btn-action {
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--outline-variant);
+  border-radius: var(--radius-md);
+  background: var(--surface-container-lowest);
+  color: #425466;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--transition-fast);
+}
+
+.btn-action svg {
+  width: 16px;
+  height: 16px;
+}
+
+.btn-action:hover {
+  background: var(--surface-container-low);
+}
+
+.top-action {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: 48px;
+  padding: 0.95rem 1.15rem;
+}
+
+@media (max-width: 600px) {
+  .top-action {
+    width: 100%;
+  }
 }
 
 /* Ionic button overrides */
@@ -217,12 +250,11 @@ ion-button.btn-secondary {
   font-size: 0.9rem;
 }
 
-.row-check {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  font-size: 0.9rem;
-  cursor: pointer;
+@media (max-width: 1024px) {
+  .row-between {
+    flex-direction: column;
+    align-items: stretch;
+  }
 }
 
 /* Utilidades */
@@ -239,9 +271,9 @@ button:hover {
 }
 
 .section-title {
-  margin: 0 0 var(--space-3);
+  margin: 0 var(--space-2) var(--space-3);
   text-align: left;
-  font-size: 1rem;
+  font-size: 1.1rem;
   font-weight: 700;
   color: var(--primary);
 }
@@ -268,25 +300,13 @@ button:hover {
   margin: 0 auto;
 }
 
-/* Grids Dashboard */
-.statsGrid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  margin-bottom: 20px;
-  gap: 14px;
-}
-
 .contentGrid {
   display: grid;
   grid-template-columns: minmax(0, 1.7fr) minmax(300px, 0.9fr);
   gap: 24px;
 }
 
-.panel {
-  padding: 20px;
-}
-
-.pillButton {
+.pill-button {
   height: 36px;
   padding: 0 12px;
   border-radius: 12px;
@@ -299,36 +319,16 @@ button:hover {
   flex-shrink: 0;
 }
 
-/* Icons */
-.search-icon {
-  position: absolute;
-  top: 50%;
-  left: 14px;
-  width: 16px;
-  height: 16px;
-  color: #6b7280;
-  transform: translateY(-50%);
-  pointer-events: none;
+.pill-button-success {
+  background-color: var(--success-text);
 }
 
-/* Transiciones */
-.slide-down-enter-active,
-.slide-down-leave-active {
-  transition: all 0.25s ease;
-  overflow: hidden;
+.pill-button-warn {
+  background-color: var(--warn);
 }
 
-.slide-down-enter-from,
-.slide-down-leave-to {
-  opacity: 0;
-  max-height: 0;
-  transform: translateY(-6px);
-}
-
-.slide-down-enter-to,
-.slide-down-leave-from {
-  opacity: 1;
-  max-height: 600px;
+.pill-button-error {
+  background-color: var(--error);
 }
 
 /* Server state */
@@ -339,10 +339,6 @@ button:hover {
 
 /* Responsive main.css */
 @media (max-width: 1024px) {
-  .statsGrid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
   .contentGrid {
     grid-template-columns: 1fr;
   }
@@ -354,17 +350,12 @@ button:hover {
     --padding-end: 20px !important;
   }
 
-  .statsGrid {
-    grid-template-columns: 1fr;
-  }
-
   .page-auth {
     padding: 0 10px;
     min-height: auto;
   }
 
-  .auth-card,
-  .auth-card-wide {
+  .auth-card {
     padding: 24px 20px;
     width: 100%;
   }
