@@ -44,6 +44,10 @@ const props = defineProps({
     type: String,
     default: undefined,
   },
+  maxlength: {
+    type: [String, Number],
+    default: undefined,
+  }
 })
 
 const emit = defineEmits(['update:modelValue', 'blur'])
@@ -63,18 +67,8 @@ function handleBlur(event) {
   <div class="field">
     <label v-if="label" :for="inputId">{{ label }}</label>
     <div class="input-wrap" :class="{ 'input-wrap--error': !!error }">
-      <input
-        :id="inputId"
-        :type="type"
-        :value="modelValue"
-        :placeholder="placeholder"
-        :required="required"
-        :step="step"
-        :min="min"
-        :max="max"
-        @input="handleInput"
-        @blur="handleBlur"
-      />
+      <input :id="inputId" :type="type" :value="modelValue" :maxlength="maxlength" :placeholder="placeholder"
+        :required="required" :step="step" :min="min" :max="max" @input="handleInput" @blur="handleBlur" />
     </div>
     <span v-if="hint && !error" class="hint">{{ hint }}</span>
     <div v-if="error" class="error-message">

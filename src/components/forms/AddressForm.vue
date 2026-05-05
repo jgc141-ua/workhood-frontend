@@ -79,64 +79,29 @@ defineExpose({ verifyValidity })
   <div class="address-form">
     <h3 v-if="title" class="section-title">{{ title }}</h3>
 
-    <FormInput
-      :model-value="props.form.street"
-      label="Calle"
-      placeholder="Calle Mayor, 123"
-      hint="Incluye número, piso y puerta"
-      :error="touched.street ? errors.street : ''"
-      required
-      @update:model-value="(v) => props.form.street = v"
-      @blur="handleBlur('street')"
-      @input="handleInput('street')"
-    />
+    <FormInput :model-value="props.form.street" label="Calle" placeholder="Calle Mayor, 123"
+      hint="Incluye número, piso y puerta" :error="touched.street ? errors.street : ''" required
+      @update:model-value="(v) => props.form.street = v" @blur="handleBlur('street')" @input="handleInput('street')" />
 
     <div class="row-fields">
-      <FormInput
-        :model-value="props.form.city"
-        label="Ciudad"
-        placeholder="Madrid"
-        :error="touched.city ? errors.city : ''"
-        required
-        @update:model-value="(v) => props.form.city = v"
-        @blur="handleBlur('city')"
-        @input="handleInput('city')"
-      />
+      <FormInput :model-value="props.form.city" label="Ciudad" placeholder="Madrid"
+        :error="touched.city ? errors.city : ''" required @update:model-value="(v) => props.form.city = v"
+        @blur="handleBlur('city')" @input="handleInput('city')" />
 
-      <FormInput
-        :model-value="props.form.state"
-        label="Provincia"
-        placeholder="Madrid"
-        :error="touched.state ? errors.state : ''"
-        required
-        @update:model-value="(v) => props.form.state = v"
-        @blur="handleBlur('state')"
-        @input="handleInput('state')"
-      />
+      <FormInput :model-value="props.form.state" label="Provincia" placeholder="Madrid"
+        :error="touched.state ? errors.state : ''" required @update:model-value="(v) => props.form.state = v"
+        @blur="handleBlur('state')" @input="handleInput('state')" />
     </div>
 
     <div class="row-fields">
-      <FormInput
-        :model-value="props.form.postal_code"
-        label="Código postal"
-        placeholder="28001"
-        :error="touched.postal_code ? errors.postal_code : ''"
-        required
-        @update:model-value="(v) => props.form.postal_code = v"
-        @blur="handleBlur('postal_code')"
-        @input="handleInput('postal_code')"
-      />
+      <FormInput :model-value="props.form.postal_code" label="Código postal" placeholder="28001"
+        :error="touched.postal_code ? errors.postal_code : ''" :maxlength="5" required
+        @update:model-value="(v) => props.form.postal_code = v" @blur="handleBlur('postal_code')"
+        @input="handleInput('postal_code')" />
 
-      <FormInput
-        :model-value="props.form.country"
-        label="País"
-        placeholder="España"
-        :error="touched.country ? errors.country : ''"
-        required
-        @update:model-value="(v) => props.form.country = v"
-        @blur="handleBlur('country')"
-        @input="handleInput('country')"
-      />
+      <FormInput :model-value="props.form.country" label="País" placeholder="España"
+        :error="touched.country ? errors.country : ''" required @update:model-value="(v) => props.form.country = v"
+        @blur="handleBlur('country')" @input="handleInput('country')" />
     </div>
   </div>
 </template>

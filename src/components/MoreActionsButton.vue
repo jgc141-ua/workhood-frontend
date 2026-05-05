@@ -1,6 +1,7 @@
 <script setup>
 import { ref } from 'vue'
 import IconMoreActions from '@/assets/icons/IconMoreActions.vue'
+import { useClickOutside } from '@/composables/useClickOutside'
 
 const props = defineProps({
   options: { // icon, label, action, danger
@@ -12,6 +13,11 @@ const props = defineProps({
 const emit = defineEmits(['select'])
 
 const open = ref(false)
+const wrapperRef = ref(null)
+
+useClickOutside(wrapperRef, () => {
+  if (open.value) open.value = false
+})
 
 function toggle() {
   open.value = !open.value
@@ -25,17 +31,11 @@ function handleOption(option) {
   close()
   emit('select', option)
 }
-
-function onBlur(e) {
-  if (!e.currentTarget.contains(e.relatedTarget)) {
-    close()
-  }
-}
 </script>
 
 <template>
-  <div class="moreActionsWrap" @blur="onBlur" tabindex="-1">
-    <button class="btn-action moreActionsBtn" type="button" @click="toggle" aria-haspopup="true" :aria-expanded="open">
+  <div ref="wrapperRef" class="moreActionsWrap" tabindex="-1">
+    <button class="btn-action moreActionsBtn" type="button" @click.stop="toggle" aria-haspopup="true" :aria-expanded="open">
       <IconMoreActions />
     </button>
 

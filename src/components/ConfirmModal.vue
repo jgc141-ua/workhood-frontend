@@ -17,7 +17,7 @@ defineEmits(['confirm', 'cancel', 'closed'])
 </script>
 
 <template>
-  <AppModal :show="show" :title="title" @close="$emit('cancel')" @after-close="$emit('closed')">
+  <AppModal :show="show" :title="title" @close="$emit('closed')">
     <div class="confirm-modal">
       <p class="confirm-modal-text">
         {{ message }}

@@ -9,7 +9,6 @@ const brand = inject('BRAND')
 const auth = useAuthStore()
 
 async function handleRegister(formData) {
-  console.log(formData)
   const ok = await auth.register(formData)
   if (!ok) {
     showToast(auth.errors.register || 'Error al enviar la solicitud. Por favor, inténtalo de nuevo.')

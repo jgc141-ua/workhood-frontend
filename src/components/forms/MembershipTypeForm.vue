@@ -37,22 +37,30 @@ watch(
   { deep: true },
 )
 
+const trimmedName = computed(() => form.value.name?.trim() || '')
+const trimmedDescription = computed(() => form.value.description?.trim() || '')
+
 const canSubmit = computed(() => {
   return (
-    form.value.name?.trim() &&
+    trimmedName.value &&
+    trimmedName.value.length <= 50 &&
+    trimmedDescription.value.length <= 100 &&
     form.value.monthly_price !== '' &&
     Number(form.value.monthly_price) >= 0
   )
 })
 
 function handleSubmit() {
-  const payload = { ...form.value }
+  const payload = {
+    name: props.isEdit ? props.initialName : trimmedName.value,
+    description: trimmedDescription.value,
+    monthly_price: form.value.monthly_price,
+    is_fixed: !!form.value.is_fixed,
+    is_active: !!form.value.is_active,
+  }
 
   if (props.isEdit && props.initialName) {
-    payload.name = props.initialName
-    if (form.value.name && form.value.name !== props.initialName) {
-      payload.new_name = form.value.name
-    }
+    payload.new_name = trimmedName.value
   }
 
   emit('submit', payload)
@@ -61,9 +69,9 @@ function handleSubmit() {
 
 <template>
   <form class="membership-type-form" @submit.prevent="handleSubmit">
-    <FormInput v-model="form.name" label="Nombre" placeholder="Ej: Flex Desk" required />
+    <FormInput v-model="form.name" label="Nombre" placeholder="Ej: Flex Desk" required maxlength="50" />
 
-    <FormInput v-model="form.description" label="Descripción" placeholder="Descripción de la membresía" />
+    <FormInput v-model="form.description" label="Descripción" placeholder="Descripción de la membresía" maxlength="100" />
 
     <FormInput v-model="form.monthly_price" label="Precio mensual" type="number" step="0.01" min="0" placeholder="0.00"
       required />

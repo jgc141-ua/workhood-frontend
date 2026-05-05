@@ -9,6 +9,7 @@ import IconTrash from '@/components/icons/IconTrash.vue'
 import AppModal from '@/components/AppModal.vue'
 import ConfirmModal from '@/components/ConfirmModal.vue'
 import MembershipTypeForm from '@/components/forms/MembershipTypeForm.vue'
+import BenefitForm from '@/components/forms/BenefitForm.vue'
 import { useMembershipTypeStore } from '@/stores/membershipTypeStore'
 import { useBenefitStore } from '@/stores/benefitStore'
 import { useResourceStore } from '@/stores/resourceStore'
@@ -73,6 +74,42 @@ const onDeleteModalClosed = () => {
     typeToDelete.value = null
 }
 
+// Modal añadir beneficio
+const isAddBenefitModalOpen = ref(false)
+const openAddBenefitModal = () => {
+    closeAddMenuModal()
+    isAddBenefitModalOpen.value = true
+}
+const closeAddBenefitModal = () => { isAddBenefitModalOpen.value = false }
+
+// Modal editar beneficio
+const isEditBenefitModalOpen = ref(false)
+const selectedBenefit = ref(null)
+const openEditBenefitModal = (benefit) => {
+    selectedBenefit.value = { ...benefit }
+    isEditBenefitModalOpen.value = true
+}
+const closeEditBenefitModal = () => {
+    isEditBenefitModalOpen.value = false
+}
+const onEditBenefitModalClosed = () => {
+    selectedBenefit.value = null
+}
+
+// Modal eliminar beneficio
+const isDeleteBenefitModalOpen = ref(false)
+const benefitToDelete = ref(null)
+const openDeleteBenefitModal = (benefit) => {
+    benefitToDelete.value = benefit
+    isDeleteBenefitModalOpen.value = true
+}
+const closeDeleteBenefitModal = () => {
+    isDeleteBenefitModalOpen.value = false
+}
+const onDeleteBenefitModalClosed = () => {
+    benefitToDelete.value = null
+}
+
 // Acciones del menú de "Más acciones"
 function handleMembershipAction(type, option) {
     if (option.action === 'delete') {
@@ -84,10 +121,16 @@ function handleMembershipAction(type, option) {
 
 function handleBenefitAction(benefit, option) {
     if (option.action === 'delete') {
-        console.log('Eliminar beneficio:', benefit.id)
+        openDeleteBenefitModal(benefit)
     } else if (option.action === 'edit') {
-        console.log('Editar beneficio:', benefit.id)
+        openEditBenefitModal(benefit)
     }
+}
+
+function truncateDescription(text, maxLength = 35) {
+    if (!text) return ''
+    if (text.length <= maxLength) return text
+    return text.slice(0, maxLength).trim() + '...'
 }
 
 // Crear membresía
@@ -117,29 +160,65 @@ async function handleDelete() {
     if (!typeToDelete.value) return
     try {
         await membershipTypeStore.deleteMembershipType(typeToDelete.value.name)
-        showToast('Membresía eliminada correctamente', 'success')
+        showToast('Membresía eliminada correctamente')
         closeDeleteModal()
     } catch (err) {
         showToast(err.message || 'Error al eliminar la membresía')
     }
 }
 
+// Crear beneficio
+async function handleCreateBenefit(formData) {
+    try {
+        await benefitStore.createBenefit(formData)
+        showToast('Beneficio creado correctamente', 'success')
+        closeAddBenefitModal()
+    } catch (err) {
+        showToast(err.message || 'Error al crear el beneficio')
+    }
+}
+
+// Actualizar beneficio
+async function handleUpdateBenefit(formData) {
+    try {
+        await benefitStore.updateBenefit(formData)
+        showToast('Beneficio actualizado correctamente', 'success')
+        closeEditBenefitModal()
+    } catch (err) {
+        showToast(err.message || 'Error al actualizar el beneficio')
+    }
+}
+
+// Eliminar beneficio
+async function handleDeleteBenefit() {
+    if (!benefitToDelete.value) return
+    try {
+        await benefitStore.deleteBenefit(benefitToDelete.value.name)
+        showToast('Beneficio eliminado correctamente')
+        closeDeleteBenefitModal()
+    } catch (err) {
+        showToast(err.message || 'Error al eliminar el beneficio')
+    }
+}
+
 // Añadir nuevos (modal)
 const addBenefit = () => {
-    console.log('Nuevo beneficio')
-    closeAddMenuModal()
+    openAddBenefitModal()
 }
 
 const addResource = () => {
-    console.log('Nuevo recurso')
     closeAddMenuModal()
 }
 
 // Carga inicial
 onMounted(async () => {
-    if (membershipTypeStore.membershipTypes.length) return
     try {
-        await membershipTypeStore.fetchMembershipTypes()
+        if (!membershipTypeStore.membershipTypes.length) {
+            await membershipTypeStore.fetchMembershipTypes()
+        }
+        if (!benefitStore.benefits.length) {
+            await benefitStore.fetchBenefits()
+        }
     } catch (err) {
         console.error(err)
     }
@@ -175,8 +254,7 @@ onMounted(async () => {
                     </button>
                 </div>
             </AppModal>
-            <AppModal :show="isAddMembershipModalOpen" title="Añadir membresía"
-                @close="closeAddMembershipModal">
+            <AppModal :show="isAddMembershipModalOpen" title="Añadir membresía" @close="closeAddMembershipModal">
                 <MembershipTypeForm :is-edit="false" @submit="handleCreate" @cancel="closeAddMembershipModal" />
             </AppModal>
 
@@ -188,9 +266,27 @@ onMounted(async () => {
 
             <ConfirmModal :show="isDeleteModalOpen" title="Eliminar membresía"
                 message="¿Estás seguro de que deseas eliminar la membresía" :item-name="typeToDelete?.name"
-                confirm-label="Eliminar" @confirm="handleDelete" @cancel="closeDeleteModal" @closed="onDeleteModalClosed" />
+                confirm-label="Eliminar" @confirm="handleDelete" @cancel="closeDeleteModal"
+                @closed="onDeleteModalClosed" />
+
+            <AppModal :show="isAddBenefitModalOpen" title="Añadir beneficio" @close="closeAddBenefitModal">
+                <BenefitForm :is-edit="false" @submit="handleCreateBenefit" @cancel="closeAddBenefitModal" />
+            </AppModal>
+
+            <AppModal :show="isEditBenefitModalOpen" title="Editar beneficio" @close="closeEditBenefitModal"
+                @after-close="onEditBenefitModalClosed">
+                <BenefitForm v-if="selectedBenefit" :is-edit="true" :model-value="selectedBenefit"
+                    :initial-name="selectedBenefit.name" @submit="handleUpdateBenefit"
+                    @cancel="closeEditBenefitModal" />
+            </AppModal>
+
+            <ConfirmModal :show="isDeleteBenefitModalOpen" title="Eliminar beneficio"
+                message="¿Estás seguro de que deseas eliminar el beneficio" :item-name="benefitToDelete?.name"
+                confirm-label="Eliminar" @confirm="handleDeleteBenefit" @cancel="closeDeleteBenefitModal"
+                @closed="onDeleteBenefitModalClosed" />
 
             <section class="contentGrid">
+
                 <div>
                     <h2 class="section-title">Membresías</h2>
 
@@ -232,17 +328,20 @@ onMounted(async () => {
                 <aside>
                     <h2 class="section-title">Beneficios</h2>
                     <DataTable class="benefits-table" :columns="[{ key: 'benefit', label: 'BENEFICIO', width: '1fr' }]"
-                        :items="benefitStore.paginatedBenefits" key-field="idx" variant="list"
+                        :items="benefitStore.benefits" key-field="id" variant="list"
+                        :loading="benefitStore.loading" :error="!!benefitStore.error"
                         :pagination="{ page: benefitStore.page, pageSize: benefitStore.pageSize, total: benefitStore.count }"
                         @prev-page="benefitStore.setPage(benefitStore.page - 1)"
                         @next-page="benefitStore.setPage(benefitStore.page + 1)">
                         <template #row="{ item }">
                             <div class="benefits-text">
                                 <h4 class="benefits-name">{{ item.name }}</h4>
-                                <p class="benefits-description">{{ item.description }}</p>
+                                <p class="benefits-description">{{ truncateDescription(item.description) }}</p>
                             </div>
                             <div class="benefits-more-actions">
-                                <div class="pill-button" v-if="item.quantity != null">{{ item.quantity }} horas</div>
+                                <div class="pill-button" v-if="item.quantity != null">
+                                    {{ item.quantity }} {{ item.quantity > 1 ? 'horas' : 'hora' }}
+                                </div>
                                 <div class="pill-button" v-else>Ilimitado</div>
                                 <MoreActionsButton :options="moreActionsOpts"
                                     @select="(opt) => handleBenefitAction(item, opt)" />
@@ -287,7 +386,7 @@ onMounted(async () => {
 
 .membership-table :deep(.data-table-list) {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
     gap: var(--space-5);
     padding: var(--space-5);
 }
@@ -302,6 +401,7 @@ onMounted(async () => {
 
 .membership-card {
     width: 100%;
+    min-width: 0;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
@@ -320,12 +420,22 @@ onMounted(async () => {
     min-width: 0;
 }
 
+.membership-card-top .pill-button {
+    white-space: normal;
+    min-width: 0;
+}
+
+.membership-card-body {
+    min-width: 0;
+}
+
 .membership-card-body h3 {
     margin: var(--space-4) 0 var(--space-2);
     font-size: 1.25rem;
     line-height: 1.2;
     color: var(--on-surface);
     overflow-wrap: break-word;
+    word-break: break-word;
 }
 
 .membership-card-body p {
@@ -333,6 +443,7 @@ onMounted(async () => {
     font-size: 0.95rem;
     color: #6b7280;
     overflow-wrap: break-word;
+    word-break: break-word;
 }
 
 .membership-card-footer {
@@ -345,17 +456,37 @@ onMounted(async () => {
     min-width: 0;
 }
 
-.benefits-table :deep(.data-table-list-item:first-child) {
-    padding-top: 10px;
+.benefits-table :deep(.data-table-list) {
+    display: flex;
+    flex-direction: column;
+    border-bottom: 0;
+}
+
+.benefits-table :deep(.data-table-list-item) {
+    border-top: 0;
+    border-bottom: 1px solid var(--outline-variant);
+    min-width: 0;
+    width: 100%;
+    box-sizing: border-box;
+    padding: var(--space-4);
+    flex-wrap: wrap;
+}
+
+.benefits-table :deep(.data-table-list-item:last-child) {
+    border-bottom: 0;
+}
+
+.benefits-table :deep(.data-table-pagination) {
+    border-top: 1px solid var(--outline-variant);
 }
 
 .benefits-text {
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    padding-left: 10px;
     min-width: 0;
     overflow-wrap: break-word;
+    word-break: break-word;
 }
 
 .benefits-name {
@@ -363,6 +494,7 @@ onMounted(async () => {
     font-size: 17px;
     font-weight: 600;
     overflow-wrap: break-word;
+    word-break: break-word;
 }
 
 .benefits-description {
@@ -370,12 +502,22 @@ onMounted(async () => {
     color: #555;
     font-size: 14px;
     overflow-wrap: break-word;
+    word-break: break-word;
 }
 
 .benefits-more-actions {
     display: flex;
     gap: var(--space-2);
     align-items: center;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    min-width: 0;
+    flex-shrink: 0;
+}
+
+.benefits-more-actions .pill-button {
+    white-space: normal;
+    min-width: 0;
 }
 
 .price {
@@ -384,6 +526,8 @@ onMounted(async () => {
     gap: 4px;
     flex-wrap: wrap;
     min-width: 0;
+    overflow-wrap: break-word;
+    word-break: break-word;
 }
 
 .price-amount {
@@ -428,7 +572,7 @@ onMounted(async () => {
     }
 }
 
-@media (max-width: 1200px) {
+@media (max-width: 1024px) {
     .contentGrid {
         grid-template-columns: 1fr;
     }
@@ -446,9 +590,12 @@ onMounted(async () => {
     }
 }
 
-@media (max-width: 600px) {
-    .membership-table :deep(.data-table-list) {
-        grid-template-columns: repeat(1, minmax(0, 1fr));
+@media (max-width: 480px) {
+
+    .membership-table :deep(.data-table-list),
+    .benefits-table :deep(.data-table-list) {
+        padding: var(--space-3);
+        gap: var(--space-3);
     }
 
     .price-amount {

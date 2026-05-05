@@ -16,4 +16,8 @@ export const ENDPOINTS = {
   membershipTypeCreate: BASE + '/membership-types/create/',
   membershipTypeUpdate: BASE + '/membership-types/update/',
   membershipTypeDelete: BASE + '/membership-types/delete/',
+  benefits: BASE + '/benefits/all/',
+  benefitCreate: BASE + '/benefits/create/',
+  benefitUpdate: BASE + '/benefits/update/',
+  benefitDelete: BASE + '/benefits/delete/',
 }

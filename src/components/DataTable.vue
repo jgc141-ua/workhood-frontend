@@ -229,14 +229,18 @@ const canNext = computed(() => {
 
 .table-card {
   width: 100%;
+  max-width: 100%;
   min-width: 0;
   padding: var(--space-3);
   padding-bottom: 0;
+  box-sizing: border-box;
 }
 
 .table-scroll-area {
   width: 100%;
+  max-width: 100%;
   min-width: 0;
+  box-sizing: border-box;
 }
 
 .table-scroll-overflow {
@@ -294,6 +298,8 @@ const canNext = computed(() => {
   padding: var(--space-4) 0;
   border-top: 1px solid var(--outline-variant);
   min-width: 0;
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 
 .data-table-list-item:first-child {

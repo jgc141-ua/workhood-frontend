@@ -169,6 +169,8 @@ export const useMembershipTypeStore = defineStore('membershipTypes', () => {
     loading,
     error,
     count,
+    next,
+    previous,
     page,
     pageSize,
     totalPages,
