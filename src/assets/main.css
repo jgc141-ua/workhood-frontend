@@ -89,11 +89,16 @@ ion-content.ion-padding {
 .btn-primary {
   flex: 1;
   border-radius: var(--radius-md);
-  background: var(--primary);
+  background: linear-gradient(135deg, #003544, #004d61);
   color: var(--on-primary);
   font-family: var(--font-display);
   font-weight: 600;
   display: block;
+  transition: var(--transition-fast);
+}
+
+.btn-primary:hover:not(:disabled) {
+  opacity: 0.85;
 }
 
 .btn-secondary {
@@ -102,6 +107,12 @@ ion-content.ion-padding {
   background: #e5e7eb;
   color: #111827;
   font-weight: 600;
+  transition: var(--transition-fast);
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: #d1d5db;
+  color: #000;
 }
 
 .btn-primary:disabled,
@@ -129,7 +140,7 @@ ion-content.ion-padding {
 }
 
 .btn-action:hover {
-  background: var(--surface-container-low);
+  opacity: 0.85;
 }
 
 .top-action {
@@ -164,20 +175,26 @@ ion-button.btn-secondary {
 }
 
 ion-button.btn-primary {
-  --background: var(--primary);
+  --background: linear-gradient(135deg, #003544, #004d61);
+  --background-hover: linear-gradient(135deg, #003544, #004d61);
   --color: var(--on-primary);
   font-family: var(--font-display);
   font-weight: 600;
 }
 
 ion-button.btn-primary:hover {
-  opacity: 0.8;
+  opacity: 0.85;
 }
 
 ion-button.btn-secondary {
   --background: #e5e7eb;
+  --background-hover: #d1d5db;
   --color: #111827;
   font-weight: 600;
+}
+
+ion-button.btn-secondary:hover {
+  --color: #000;
 }
 
 /* Campos de formulario */

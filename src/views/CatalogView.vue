@@ -1,5 +1,5 @@
 <script setup>
-import { inject, ref } from 'vue'
+import { inject, ref, onMounted } from 'vue'
 import { IonPage, IonContent } from '@ionic/vue'
 import MobileHeader from '@/components/MobileHeader.vue'
 import DataTable from '@/components/DataTable.vue'
@@ -7,11 +7,14 @@ import MoreActionsButton from '@/components/MoreActionsButton.vue'
 import IconEdit from '@/components/icons/IconEdit.vue'
 import IconTrash from '@/components/icons/IconTrash.vue'
 import AppModal from '@/components/AppModal.vue'
-import { useMembershipStore } from '@/stores/membershipStore'
+import ConfirmModal from '@/components/ConfirmModal.vue'
+import MembershipTypeForm from '@/components/forms/MembershipTypeForm.vue'
+import { useMembershipTypeStore } from '@/stores/membershipTypeStore'
 import { useBenefitStore } from '@/stores/benefitStore'
 import { useResourceStore } from '@/stores/resourceStore'
+import { showToast } from '@/composables/toast'
 
-const membershipStore = useMembershipStore()
+const membershipTypeStore = useMembershipTypeStore()
 const benefitStore = useBenefitStore()
 const resourceStore = useResourceStore()
 
@@ -29,45 +32,118 @@ const moreActionsOpts = [
     { icon: IconTrash, label: 'Eliminar', action: 'delete', danger: true }
 ]
 
+// Modal menú añadir
+const isAddMenuModalOpen = ref(false)
+const openAddMenuModal = () => { isAddMenuModalOpen.value = true }
+const closeAddMenuModal = () => { isAddMenuModalOpen.value = false }
+
+// Modal añadir membresía
+const isAddMembershipModalOpen = ref(false)
+const openAddMembershipModal = () => {
+    closeAddMenuModal()
+    isAddMembershipModalOpen.value = true
+}
+const closeAddMembershipModal = () => { isAddMembershipModalOpen.value = false }
+
+// Modal editar membresía
+const isEditModalOpen = ref(false)
+const selectedType = ref(null)
+const openEditModal = (type) => {
+    selectedType.value = { ...type }
+    isEditModalOpen.value = true
+}
+const closeEditModal = () => {
+    isEditModalOpen.value = false
+}
+const onEditModalClosed = () => {
+    selectedType.value = null
+}
+
+// Modal eliminar membresía
+const isDeleteModalOpen = ref(false)
+const typeToDelete = ref(null)
+const openDeleteModal = (type) => {
+    typeToDelete.value = type
+    isDeleteModalOpen.value = true
+}
+const closeDeleteModal = () => {
+    isDeleteModalOpen.value = false
+}
+const onDeleteModalClosed = () => {
+    typeToDelete.value = null
+}
+
 // Acciones del menú de "Más acciones"
-function handleMembershipAction(membership, option) {
+function handleMembershipAction(type, option) {
     if (option.action === 'delete') {
-        // TODO: implementar llamada al store para eliminar membresía
-        console.log('Eliminar membresía:', membership.id)
+        openDeleteModal(type)
     } else if (option.action === 'edit') {
-        // TODO: implementar llamada al store para editar membresía
-        console.log('Editar membresía:', membership.id)
+        openEditModal(type)
     }
 }
 
 function handleBenefitAction(benefit, option) {
     if (option.action === 'delete') {
-        // TODO: implementar llamada al store para eliminar beneficio
         console.log('Eliminar beneficio:', benefit.id)
     } else if (option.action === 'edit') {
-        // TODO: implementar llamada al store para editar beneficio
         console.log('Editar beneficio:', benefit.id)
     }
 }
 
-// Modal añadir
-const isAddModalOpen = ref(false)
-const openAddModal = () => { isAddModalOpen.value = true }
-const closeAddModal = () => { isAddModalOpen.value = false }
+// Crear membresía
+async function handleCreate(formData) {
+    try {
+        await membershipTypeStore.createMembershipType(formData)
+        showToast('Membresía creada correctamente', 'success')
+        closeAddMembershipModal()
+    } catch (err) {
+        showToast(err.message || 'Error al crear la membresía')
+    }
+}
+
+// Actualizar membresía
+async function handleUpdate(formData) {
+    try {
+        await membershipTypeStore.updateMembershipType(formData)
+        showToast('Membresía actualizada correctamente', 'success')
+        closeEditModal()
+    } catch (err) {
+        showToast(err.message || 'Error al actualizar la membresía')
+    }
+}
+
+// Eliminar membresía
+async function handleDelete() {
+    if (!typeToDelete.value) return
+    try {
+        await membershipTypeStore.deleteMembershipType(typeToDelete.value.name)
+        showToast('Membresía eliminada correctamente', 'success')
+        closeDeleteModal()
+    } catch (err) {
+        showToast(err.message || 'Error al eliminar la membresía')
+    }
+}
 
 // Añadir nuevos (modal)
-const addMembership = () => {
-    console.log('Nueva membresía')
-    closeAddModal()
-}
 const addBenefit = () => {
     console.log('Nuevo beneficio')
-    closeAddModal()
+    closeAddMenuModal()
 }
+
 const addResource = () => {
     console.log('Nuevo recurso')
-    closeAddModal()
+    closeAddMenuModal()
 }
+
+// Carga inicial
+onMounted(async () => {
+    if (membershipTypeStore.membershipTypes.length) return
+    try {
+        await membershipTypeStore.fetchMembershipTypes()
+    } catch (err) {
+        console.error(err)
+    }
+})
 </script>
 
 <template>
@@ -81,14 +157,14 @@ const addResource = () => {
                     <h1 class="title">Membresías, beneficios y recursos</h1>
                 </div>
 
-                <button class="btn btn-primary top-action" type="button" @click="openAddModal">
+                <button class="btn btn-primary top-action" type="button" @click="openAddMenuModal">
                     <span>Añadir</span>
                 </button>
             </header>
 
-            <AppModal :show="isAddModalOpen" title="Añadir" @close="closeAddModal">
+            <AppModal :show="isAddMenuModalOpen" title="Añadir" @close="closeAddMenuModal">
                 <div class="top-actions-modal">
-                    <button class="btn btn-secondary top-action" type="button" @click="addMembership">
+                    <button class="btn btn-secondary top-action" type="button" @click="openAddMembershipModal">
                         <span>Crear una membresía nueva</span>
                     </button>
                     <button class="btn btn-secondary top-action" type="button" @click="addBenefit">
@@ -99,38 +175,54 @@ const addResource = () => {
                     </button>
                 </div>
             </AppModal>
+            <AppModal :show="isAddMembershipModalOpen" title="Añadir membresía"
+                @close="closeAddMembershipModal">
+                <MembershipTypeForm :is-edit="false" @submit="handleCreate" @cancel="closeAddMembershipModal" />
+            </AppModal>
+
+            <AppModal :show="isEditModalOpen" title="Editar membresía" @close="closeEditModal"
+                @after-close="onEditModalClosed">
+                <MembershipTypeForm v-if="selectedType" :is-edit="true" :model-value="selectedType"
+                    :initial-name="selectedType.name" @submit="handleUpdate" @cancel="closeEditModal" />
+            </AppModal>
+
+            <ConfirmModal :show="isDeleteModalOpen" title="Eliminar membresía"
+                message="¿Estás seguro de que deseas eliminar la membresía" :item-name="typeToDelete?.name"
+                confirm-label="Eliminar" @confirm="handleDelete" @cancel="closeDeleteModal" @closed="onDeleteModalClosed" />
 
             <section class="contentGrid">
                 <div>
-                    <h2 class="section-title">Membresías Activas</h2>
+                    <h2 class="section-title">Membresías</h2>
 
                     <DataTable class="membership-table" :columns="[{ key: 'plan', label: 'MEMBRESÍAS', width: '1fr' }]"
-                        :items="membershipStore.paginatedMemberships" key-field="idx" variant="list"
-                        :pagination="{ page: membershipStore.page, pageSize: membershipStore.pageSize, total: membershipStore.count }"
-                        @prev-page="membershipStore.setPage(membershipStore.page - 1)"
-                        @next-page="membershipStore.setPage(membershipStore.page + 1)">
+                        :items="membershipTypeStore.membershipTypes" key-field="id" variant="list"
+                        :loading="membershipTypeStore.loading" :error="!!membershipTypeStore.error"
+                        :pagination="{ page: membershipTypeStore.page, pageSize: membershipTypeStore.pageSize, total: membershipTypeStore.count }"
+                        @prev-page="membershipTypeStore.setPage(membershipTypeStore.page - 1)"
+                        @next-page="membershipTypeStore.setPage(membershipTypeStore.page + 1)">
                         <template #row="{ item }">
                             <article class="card membership-card">
                                 <div class="membership-card-top">
                                     <span class="pill-button" style="margin-left: -5px; color: white;"
-                                        :class="item.state ? 'pill-button-success' : 'pill-button-error'">{{ item.state
-                                            ? 'Activo' :
-                                            'Inactivo' }}</span>
+                                        :class="item.is_active ? 'pill-button-success' : 'pill-button-error'">
+                                        {{ item.is_active ? 'Activo' : 'Inactivo' }}
+                                    </span>
                                     <MoreActionsButton :options="moreActionsOpts"
                                         @select="(opt) => handleMembershipAction(item, opt)" />
                                 </div>
 
                                 <div class="membership-card-body">
-                                    <h3>{{ item.title }}</h3>
-                                    <p>{{ item.description }}</p>
+                                    <h3>{{ item.name }}</h3>
+                                    <p>{{ item.description || 'Sin descripción' }}</p>
                                 </div>
 
                                 <div class="membership-card-footer">
                                     <div class="price">
-                                        <span class="price-amount">{{ item.price }}</span>
-                                        <span class="price-unit">{{ item.period }}</span>
+                                        <span class="price-amount">{{ item.monthly_price }} €</span>
+                                        <span class="price-unit">/mes</span>
                                     </div>
-                                    <span class="membership-meta">{{ item.meta }}</span>
+                                    <span class="membership-meta">{{ item.is_fixed ? 'Escritorio fijo' :
+                                        'Escritorio flexible' }}</span>
                                 </div>
                             </article>
                         </template>

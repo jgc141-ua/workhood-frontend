@@ -94,7 +94,7 @@ async function loadUserData() {
 
     if (!u.email) {
         try {
-            await meStore.fetchMe(tokenStore)
+            await meStore.fetchMe()
             u = meStore.user
         } catch {
             notData.value = true

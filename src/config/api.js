@@ -8,6 +8,12 @@ export const ENDPOINTS = {
   refresh: BASE + '/accounts/refresh/',
   me: BASE + '/accounts/me/',
   meUpdate: BASE + '/accounts/me/update/',
-  members: BASE + '/members/',
+  members: BASE + '/members/all/',
   memberDetail: BASE + '/members/',
+  memberDelete: BASE + '/members/delete/',
+  membershipTypes: BASE + '/membership-types/all/',
+  membershipTypesActive: BASE + '/membership-types/active/',
+  membershipTypeCreate: BASE + '/membership-types/create/',
+  membershipTypeUpdate: BASE + '/membership-types/update/',
+  membershipTypeDelete: BASE + '/membership-types/delete/',
 }

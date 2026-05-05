@@ -71,7 +71,7 @@ const canNext = computed(() => {
 </script>
 
 <template>
-  <div v-if="loading" class="server-state">
+  <div v-if="loading && !items.length" class="server-state">
     Cargando...
   </div>
 
@@ -121,8 +121,16 @@ const canNext = computed(() => {
 
     <div v-if="paginationInfo" class="data-table-pagination">
       <p class="data-table-pagination-info">
-        Mostrando {{ paginationInfo.start }}-{{ paginationInfo.end }}
-        de {{ paginationInfo.total }} resultados
+        <template v-if="loading && items.length">
+          <span class="loading-hint">
+            <span class="loading-dot"></span>
+            Actualizando...
+          </span>
+        </template>
+        <template v-else>
+          Mostrando {{ paginationInfo.start }}-{{ paginationInfo.end }}
+          de {{ paginationInfo.total }} resultados
+        </template>
       </p>
 
       <div class="data-table-pagination-controls">
@@ -192,6 +200,31 @@ const canNext = computed(() => {
 .data-table-page-btn:disabled {
   opacity: 0.45;
   cursor: not-allowed;
+}
+
+.loading-hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.loading-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--primary);
+  animation: pulse-dot 1s ease-in-out infinite;
+}
+
+@keyframes pulse-dot {
+  0%, 100% {
+    opacity: 0.4;
+    transform: scale(0.8);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 .table-card {

@@ -10,8 +10,10 @@ export const useMeStore = defineStore('me', () => {
     JSON.parse(localStorage.getItem('profile') || sessionStorage.getItem('profile') || null),
   )
 
+  const tokenStore = useTokenStore()
+
   // Obtener todos los datos del usuario
-  async function fetchMe(tokenStore) {
+  async function fetchMe() {
     const res = await apiFetch(ENDPOINTS.me, {}, tokenStore)
     const data = await res.json()
     const roleName = data.role?.name || ''
@@ -29,7 +31,7 @@ export const useMeStore = defineStore('me', () => {
   }
 
   // Actualizar el perfil
-  async function updateProfile(payload, tokenStore) {
+  async function updateProfile(payload) {
     const res = await apiFetch(
       ENDPOINTS.meUpdate,
       {
@@ -45,7 +47,7 @@ export const useMeStore = defineStore('me', () => {
       throw new Error(data.detail || 'Error al actualizar el perfil.')
     }
 
-    await fetchMe(tokenStore)
+    await fetchMe()
   }
 
   // Limpiar datos del usuario

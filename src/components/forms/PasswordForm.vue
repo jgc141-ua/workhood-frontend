@@ -1,5 +1,6 @@
 <script setup>
 import { ref, watch } from 'vue'
+import FormInput from '@/components/forms/FormInput.vue'
 
 const props = defineProps({
   form: {
@@ -53,7 +54,6 @@ const validateField = (fieldName) => {
   if (fieldName === 'password_confirm') {
     if (props.form.password && value !== props.form.password) {
       errors.value[fieldName] = 'Las contraseñas no coinciden'
-      return
     }
   }
 }
@@ -106,42 +106,15 @@ defineExpose({ verifyValidity })
 
 <template>
   <div class="step">
-    <div class="field">
-      <label for="password">Contraseña</label>
-      <div class="input-wrap" :class="{ 'input-wrap--error': touched.password && errors.password }">
-        <input
-          id="password"
-          v-model="form.password"
-          type="password"
-          placeholder="••••••••"
-          minlength="8"
-          :required="!optional"
-          @blur="handleBlur('password')"
-          @input="handleInput('password')"
-        />
-      </div>
-      <div v-if="touched.password && errors.password" class="error-message">
-        {{ errors.password }}
-      </div>
-      <p v-else class="hint">Mínimo 8 caracteres, incluye al menos una letra mayúscula, un número y un carácter especial</p>
-    </div>
+    <FormInput :model-value="props.form.password" label="Contraseña" type="password" placeholder="••••••••"
+      :required="!optional" :error="touched.password ? errors.password : ''"
+      hint="Mínimo 8 caracteres, incluye al menos una letra mayúscula, un número y un carácter especial"
+      @update:model-value="(v) => props.form.password = v" @blur="handleBlur('password')"
+      @input="handleInput('password')" />
 
-    <div class="field">
-      <label for="password_confirm">Confirmar contraseña</label>
-      <div class="input-wrap" :class="{ 'input-wrap--error': touched.password_confirm && errors.password_confirm }">
-        <input
-          id="password_confirm"
-          v-model="form.password_confirm"
-          type="password"
-          placeholder="••••••••"
-          :required="!optional"
-          @blur="handleBlur('password_confirm')"
-          @input="handleInput('password_confirm')"
-        />
-      </div>
-      <div v-if="touched.password_confirm && errors.password_confirm" class="error-message">
-        {{ errors.password_confirm }}
-      </div>
-    </div>
+    <FormInput :model-value="props.form.password_confirm" label="Confirmar contraseña" type="password"
+      placeholder="••••••••" :required="!optional" :error="touched.password_confirm ? errors.password_confirm : ''"
+      @update:model-value="(v) => props.form.password_confirm = v" @blur="handleBlur('password_confirm')"
+      @input="handleInput('password_confirm')" />
   </div>
 </template>

@@ -6,11 +6,11 @@ defineProps({
     title: { type: String, default: '' },
 })
 
-defineEmits(['close'])
+defineEmits(['close', 'after-close'])
 </script>
 
 <template>
-    <ion-modal :is-open="show" @did-dismiss="$emit('close')" class="app-modal">
+    <ion-modal :is-open="show" @did-dismiss="$emit('after-close')" class="app-modal">
         <div class="card-base app-modal-box">
             <ion-header class="ion-no-border">
                 <ion-toolbar>

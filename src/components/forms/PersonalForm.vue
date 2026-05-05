@@ -1,8 +1,9 @@
 <script setup>
-import { ref, watch, onMounted } from 'vue'
+import { ref, watch } from 'vue'
+import FormInput from '@/components/forms/FormInput.vue'
 import PhoneInput from '../PhoneInput.vue'
 
-const { form, phoneData } = defineProps({
+const props = defineProps({
   form: {
     type: Object,
     required: true,
@@ -19,7 +20,7 @@ const errors = ref({})
 const touched = ref({})
 
 const validateField = (fieldName) => {
-  const value = form[fieldName]
+  const value = props.form[fieldName]
   errors.value[fieldName] = ''
 
   if (fieldName === 'email' && value) {
@@ -71,7 +72,7 @@ const handleBlur = (fieldName) => {
 
 const handleInput = (fieldName) => {
   if (fieldName == "phone") {
-    form.phone = phoneData.phoneCode + " " + phoneData.phone.trim()
+    props.form.phone = props.phoneData.phoneCode + " " + props.phoneData.phone.trim()
   }
 
   if (errors.value[fieldName]) {
@@ -88,53 +89,27 @@ defineExpose({
 
 <template>
   <div class="step">
-    <div class="field">
-      <label for="email">Email</label>
-      <div class="input-wrap">
-        <input id="email" v-model="form.email" type="email" placeholder="nombre@email.com" required
-          @blur="handleBlur('email')" @input="handleInput('email')" />
-      </div>
-      <div v-if="touched.email && errors.email" class="error-message">
-        {{ errors.email }}
-      </div>
-    </div>
+    <FormInput :model-value="props.form.email" label="Email" type="email" placeholder="nombre@email.com"
+      :error="touched.email ? errors.email : ''" required @update:model-value="(v) => props.form.email = v"
+      @blur="handleBlur('email')" @input="handleInput('email')" />
 
     <div class="row-fields">
-      <div class="field">
-        <label for="first_name">Nombre</label>
-        <div class="input-wrap">
-          <input id="first_name" v-model="form.first_name" type="text" placeholder="Juan" required
-            @blur="handleBlur('first_name')" @input="handleInput('first_name')" />
-        </div>
-        <div v-if="touched.first_name && errors.first_name" class="error-message">
-          {{ errors.first_name }}
-        </div>
-      </div>
+      <FormInput :model-value="props.form.first_name" label="Nombre" placeholder="Juan"
+        :error="touched.first_name ? errors.first_name : ''" required
+        @update:model-value="(v) => props.form.first_name = v" @blur="handleBlur('first_name')"
+        @input="handleInput('first_name')" />
 
-      <div class="field">
-        <label for="last_name">Apellidos</label>
-        <div class="input-wrap">
-          <input id="last_name" v-model="form.last_name" type="text" placeholder="Pérez García" required
-            @blur="handleBlur('last_name')" @input="handleInput('last_name')" />
-        </div>
-        <div v-if="touched.last_name && errors.last_name" class="error-message">
-          {{ errors.last_name }}
-        </div>
-      </div>
+      <FormInput :model-value="props.form.last_name" label="Apellidos" placeholder="Pérez García"
+        :error="touched.last_name ? errors.last_name : ''" required
+        @update:model-value="(v) => props.form.last_name = v" @blur="handleBlur('last_name')"
+        @input="handleInput('last_name')" />
     </div>
 
-    <PhoneInput :phone-data="phoneData" :touched="touched" :errors="errors" @field-blur="handleBlur"
+    <PhoneInput :phone-data="props.phoneData" :touched="touched" :errors="errors" @field-blur="handleBlur"
       @field-input="handleInput" />
 
-    <div class="field">
-      <label for="nif_cif">NIF/CIF</label>
-      <div class="input-wrap">
-        <input id="nif_cif" v-model="form.nif_cif" type="text" placeholder="12345678Z" required
-          @blur="handleBlur('nif_cif')" @input="handleInput('nif_cif')" />
-      </div>
-      <div v-if="touched.nif_cif && errors.nif_cif" class="error-message">
-        {{ errors.nif_cif }}
-      </div>
-    </div>
+    <FormInput :model-value="props.form.nif_cif" label="NIF/CIF" placeholder="12345678Z"
+      :error="touched.nif_cif ? errors.nif_cif : ''" required @update:model-value="(v) => props.form.nif_cif = v"
+      @blur="handleBlur('nif_cif')" @input="handleInput('nif_cif')" />
   </div>
 </template>

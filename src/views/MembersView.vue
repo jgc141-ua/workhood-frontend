@@ -7,6 +7,7 @@ import MobileHeader from '@/components/MobileHeader.vue'
 import IconEdit from '@/components/icons/IconEdit.vue'
 import IconSearch from '@/components/icons/IconSearch.vue'
 import AppModal from '@/components/AppModal.vue'
+import ConfirmModal from '@/components/ConfirmModal.vue'
 import RegisterForm from '@/components/forms/RegisterForm.vue'
 import EditMemberForm from '@/components/forms/EditMemberForm.vue'
 import DataTable from '@/components/DataTable.vue'
@@ -45,8 +46,39 @@ const openEditMemberModal = async (member) => {
 }
 
 const closeEditMemberModal = () => {
-  selectedMember.value = null
   isEditMemberModalOpen.value = false
+}
+
+const onEditMemberModalClosed = () => {
+  selectedMember.value = null
+}
+
+// Modal eliminar
+const isDeleteMemberModalOpen = ref(false)
+const memberToDelete = ref(null)
+
+const openDeleteMemberModal = (member) => {
+  memberToDelete.value = member
+  isDeleteMemberModalOpen.value = true
+}
+
+const closeDeleteMemberModal = () => {
+  isDeleteMemberModalOpen.value = false
+}
+
+const onDeleteMemberModalClosed = () => {
+  memberToDelete.value = null
+}
+
+async function handleDeleteMember() {
+  if (!memberToDelete.value) return
+  try {
+    await membersStore.deleteMember(memberToDelete.value.email)
+    showToast('Miembro eliminado correctamente', 'success')
+    closeDeleteMemberModal()
+  } catch (err) {
+    showToast(err.message || 'Error al eliminar el miembro')
+  }
 }
 
 // Búsqueda con debounce
@@ -114,8 +146,7 @@ async function handleUpdateMember(formData) {
 // Acciones del menú de "Más acciones"
 function handleMemberAction(member, option) {
   if (option.action === 'delete') {
-    // TODO: implementar llamada al store para eliminar miembro
-    console.log('Eliminar miembro:', member.email)
+    openDeleteMemberModal(member)
   }
 }
 
@@ -152,9 +183,14 @@ onMounted(async () => {
           <RegisterForm @submit="handleRegister" />
         </AppModal>
 
-        <AppModal :show="isEditMemberModalOpen" title="Editar miembro" @close="closeEditMemberModal">
-          <EditMemberForm v-if="selectedMember" :member-data="selectedMember" @submit="handleUpdateMember" />
+        <AppModal :show="isEditMemberModalOpen" title="Editar miembro" @close="closeEditMemberModal"
+          @after-close="onEditMemberModalClosed">
+          <EditMemberForm v-if="selectedMember" :member-data="selectedMember" @submit="handleUpdateMember" @cancel="closeEditMemberModal" />
         </AppModal>
+
+        <ConfirmModal :show="isDeleteMemberModalOpen" title="Eliminar miembro"
+          message="¿Estás seguro de que deseas eliminar al miembro" :item-name="memberToDelete?.email"
+          confirm-label="Eliminar" @confirm="handleDeleteMember" @cancel="closeDeleteMemberModal" @closed="onDeleteMemberModalClosed" />
 
         <section class="members-bar">
           <div class="members-tabs" role="tablist" aria-label="Filtros de miembros">
