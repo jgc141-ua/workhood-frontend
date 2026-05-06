@@ -10,7 +10,7 @@ import AppModal from '@/components/AppModal.vue'
 import ConfirmModal from '@/components/ConfirmModal.vue'
 import RegisterForm from '@/components/forms/RegisterForm.vue'
 import EditMemberForm from '@/components/forms/EditMemberForm.vue'
-import DataTable from '@/components/DataTable.vue'
+import DataTableColumns from '@/components/DataTableColumns.vue'
 import { useAuthStore } from '@/stores/authStore'
 import { showToast } from '@/composables/toast'
 import MoreActionsButton from '@/components/MoreActionsButton.vue'
@@ -108,7 +108,7 @@ const memberColumns = [
   { key: 'member', label: 'MIEMBRO', width: '1fr' },
   { key: 'contact', label: 'CONTACTO', width: '1fr' },
   { key: 'nif', label: 'NIF/CIF', width: '1fr' },
-  { key: 'actions', label: 'ACCIONES', width: '0.25fr' },
+  { key: 'actions', label: '', width: '0.25fr' },
 ]
 
 // Helpers
@@ -147,6 +147,8 @@ async function handleUpdateMember(formData) {
 function handleMemberAction(member, option) {
   if (option.action === 'delete') {
     openDeleteMemberModal(member)
+  } else if (option.action === 'edit') {
+    openEditMemberModal(member)
   }
 }
 
@@ -157,7 +159,7 @@ onMounted(async () => {
   try {
     await membersStore.fetchMembers()
   } catch (err) {
-    console.error(err)
+    // Los stores ya registran el error
   }
 })
 </script>
@@ -185,12 +187,14 @@ onMounted(async () => {
 
         <AppModal :show="isEditMemberModalOpen" title="Editar miembro" @close="closeEditMemberModal"
           @after-close="onEditMemberModalClosed">
-          <EditMemberForm v-if="selectedMember" :member-data="selectedMember" @submit="handleUpdateMember" @cancel="closeEditMemberModal" />
+          <EditMemberForm v-if="selectedMember" :member-data="selectedMember" @submit="handleUpdateMember"
+            @cancel="closeEditMemberModal" />
         </AppModal>
 
         <ConfirmModal :show="isDeleteMemberModalOpen" title="Eliminar miembro"
           message="¿Estás seguro de que deseas eliminar al miembro" :item-name="memberToDelete?.email"
-          confirm-label="Eliminar" @confirm="handleDeleteMember" @cancel="closeDeleteMemberModal" @closed="onDeleteMemberModalClosed" />
+          confirm-label="Eliminar" @confirm="handleDeleteMember" @cancel="closeDeleteMemberModal"
+          @closed="onDeleteMemberModalClosed" />
 
         <section class="members-bar">
           <div class="members-tabs" role="tablist" aria-label="Filtros de miembros">
@@ -208,8 +212,8 @@ onMounted(async () => {
           </div>
         </section>
 
-        <DataTable :columns="memberColumns" :items="membersStore.members" key-field="id" :loading="membersStore.loading"
-          :error="membersStore.error"
+        <DataTableColumns :columns="memberColumns" :items="membersStore.members" key-field="id"
+          :loading="membersStore.loading" :error="membersStore.error"
           :pagination="{ page: membersStore.page, pageSize: membersStore.pageSize, total: membersStore.count }"
           @prev-page="prevPage" @next-page="nextPage">
 
@@ -237,15 +241,13 @@ onMounted(async () => {
 
           <template #cell-actions="{ item }">
             <div class="members-actions">
-              <button type="button" class="btn-action" aria-label="Editar miembro" @click="openEditMemberModal(item)">
-                <IconEdit />
-              </button>
               <MoreActionsButton :options="[
+                { icon: IconEdit, label: 'Editar', action: 'edit', danger: false },
                 { icon: IconTrash, label: 'Eliminar', action: 'delete', danger: true }
               ]" @select="(opt) => handleMemberAction(item, opt)" />
             </div>
           </template>
-        </DataTable>
+        </DataTableColumns>
       </section>
     </ion-content>
   </ion-page>

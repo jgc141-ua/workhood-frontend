@@ -20,4 +20,12 @@ export const ENDPOINTS = {
   benefitCreate: BASE + '/benefits/create/',
   benefitUpdate: BASE + '/benefits/update/',
   benefitDelete: BASE + '/benefits/delete/',
+  resourceTypes: BASE + '/resource-types/all/',
+  resourceTypeCreate: BASE + '/resource-types/create/',
+  resourceTypeUpdate: BASE + '/resource-types/update/',
+  resourceTypeDelete: BASE + '/resource-types/delete/',
+  resources: BASE + '/resources/all/',
+  resourceCreate: BASE + '/resources/create/',
+  resourceUpdate: BASE + '/resources/update/',
+  resourceDelete: BASE + '/resources/delete/',
 }

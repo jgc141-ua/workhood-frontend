@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, ref, watch } from 'vue'
+import { onMounted, ref, watch, nextTick, onUnmounted } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useCountryPhoneStore } from '@/stores/countryPhoneStore'
 import IconDropdown from './icons/IconDropdown.vue'
@@ -25,6 +25,51 @@ const countryPhoneStore = useCountryPhoneStore()
 const { countries, selectedCountry } = storeToRefs(countryPhoneStore)
 
 const isOpen = ref(false)
+const triggerRef = ref(null)
+const dropdownRef = ref(null)
+const dropdownStyle = ref({})
+
+function updatePosition() {
+  if (!triggerRef.value) return
+  const rect = triggerRef.value.getBoundingClientRect()
+  dropdownStyle.value = {
+    position: 'fixed',
+    top: `${rect.bottom}px`,
+    left: `${rect.left}px`,
+    width: `${rect.width}px`,
+  }
+}
+
+function addListeners() {
+  window.addEventListener('scroll', updatePosition, true)
+  window.addEventListener('resize', updatePosition)
+  document.addEventListener('click', handleClickOutside)
+}
+
+function removeListeners() {
+  window.removeEventListener('scroll', updatePosition, true)
+  window.removeEventListener('resize', updatePosition)
+  document.removeEventListener('click', handleClickOutside)
+}
+
+function handleClickOutside(event) {
+  const clickTrigger = triggerRef.value?.contains(event.target)
+  const clickDropdown = dropdownRef.value?.contains(event.target)
+  if (!clickTrigger && !clickDropdown) {
+    isOpen.value = false
+  }
+}
+
+watch(isOpen, (open) => {
+  if (open) {
+    nextTick(updatePosition)
+    addListeners()
+  } else {
+    removeListeners()
+  }
+})
+
+onUnmounted(removeListeners)
 
 const flagUrl = (code) => `https://flagcdn.com/24x18/${code.toLowerCase()}.png`
 
@@ -53,18 +98,20 @@ watch(() => props.phoneData.phoneCode, (phoneCode) => {
         <label for="phone">Teléfono</label>
         <div class="phone-field">
             <div class="country-field">
-                <div class="country-input" @click="isOpen = !isOpen">
+                <div ref="triggerRef" class="country-input" @click="isOpen = !isOpen">
                     <img :src="flagUrl(selectedCountry.code)" class="flag" />
                     <span class="code">{{ selectedCountry.phoneCode }}</span>
                     <IconDropdown :isOpen="isOpen" />
                 </div>
-                <div v-if="isOpen" class="dropdown" @click.stop>
-                    <div v-for="country in countries" :key="country.code" class="option"
-                        @click="selectCountry(country)">
-                        <img :src="flagUrl(country.code)" class="flag" />
-                        <span class="code">{{ country.phoneCode }}</span>
+                <teleport to="body" v-if="isOpen">
+                    <div ref="dropdownRef" class="dropdown" :style="dropdownStyle" @click.stop>
+                        <div v-for="country in countries" :key="country.code" class="option"
+                            @click="selectCountry(country)">
+                            <img :src="flagUrl(country.code)" class="flag" />
+                            <span class="code">{{ country.phoneCode }}</span>
+                        </div>
                     </div>
-                </div>
+                </teleport>
             </div>
             <div class="input-wrap">
                 <input id="phone" v-model="phoneData.phone" type="tel" placeholder="600 000 000" required
@@ -126,17 +173,14 @@ watch(() => props.phoneData.phoneCode, (phoneCode) => {
 }
 
 .dropdown {
-    position: absolute;
-    top: 100%;
-    left: 0;
-    right: 0;
     max-height: 280px;
     overflow-y: auto;
     background: white;
     border: 1px solid #ddd;
     border-radius: 0 0 8px 8px;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-    z-index: 10;
+    z-index: 1000;
+    box-sizing: border-box;
 }
 
 .option {
