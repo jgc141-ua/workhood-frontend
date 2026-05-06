@@ -13,11 +13,9 @@ const props = defineProps({
 
 <style scoped>
 .icon {
-  flex-shrink: 0;
-  width: 20px;
-  height: 20px;
-  color: #6b7280;
-  transition: transform 0.25s ease;
+  width: 16px;
+  height: 16px;
+  transition: transform 0.3s ease;
 }
 
 .icon.rotate {
