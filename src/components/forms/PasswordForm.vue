@@ -24,7 +24,8 @@ function bothEmpty() {
   return !props.form.password?.trim() && !props.form.password_confirm?.trim()
 }
 
-const validateField = (fieldName) => {
+// Valida un campo de contraseña según reglas de fortaleza y coincidencia
+function validateField(fieldName) {
   const value = props.form[fieldName]
   errors.value[fieldName] = ''
 
@@ -58,7 +59,8 @@ const validateField = (fieldName) => {
   }
 }
 
-const checkValidity = () => {
+// Emite el estado global de validez del formulario
+function checkValidity() {
   // Si es opcional y ambos vacíos → siempre válido
   if (props.optional && bothEmpty()) {
     emit('isValid', true)
@@ -69,7 +71,7 @@ const checkValidity = () => {
   emit('isValid', !hasErrors)
 }
 
-const handleBlur = (fieldName) => {
+function handleBlur(fieldName) {
   touched.value[fieldName] = true
   validateField(fieldName)
 
@@ -80,7 +82,7 @@ const handleBlur = (fieldName) => {
   checkValidity()
 }
 
-const handleInput = (fieldName) => {
+function handleInput(fieldName) {
   if (errors.value[fieldName]) {
     errors.value[fieldName] = ''
   }
@@ -92,7 +94,7 @@ const handleInput = (fieldName) => {
   checkValidity()
 }
 
-const verifyValidity = () => {
+function verifyValidity() {
   validateField('password')
   validateField('password_confirm')
   checkValidity()

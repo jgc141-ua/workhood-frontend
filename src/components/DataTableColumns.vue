@@ -39,7 +39,8 @@ const gridTemplateColumns = computed(() =>
   props.columns.map((c) => c.width || '1fr').join(' ')
 )
 
-const getItemKey = (item, index) => {
+// Genera una clave única para cada fila
+function getItemKey(item, index) {
   if (props.keyField && item[props.keyField] != null) {
     return item[props.keyField]
   }
@@ -79,8 +80,8 @@ const getItemKey = (item, index) => {
       </div>
     </div>
 
-    <DataTablePagination v-if="pagination" :pagination="pagination" :loading="loading"
-      :items-length="items.length" @prev-page="emit('prev-page')" @next-page="emit('next-page')" />
+    <DataTablePagination v-if="pagination" :pagination="pagination" :loading="loading" :items-length="items.length"
+      @prev-page="emit('prev-page')" @next-page="emit('next-page')" />
   </div>
 </template>
 
@@ -102,12 +103,14 @@ const getItemKey = (item, index) => {
   width: 100%;
   max-width: 100%;
   min-width: 0;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
   box-sizing: border-box;
 }
 
 .data-table {
   width: 100%;
-  min-width: 600px;
+  min-width: max-content;
 }
 
 .data-table-head,
@@ -142,11 +145,19 @@ const getItemKey = (item, index) => {
 }
 
 @media (max-width: 600px) {
-  .data-table-pagination {
-    text-align: center;
-    align-items: center;
-    justify-content: center;
-    flex-direction: column;
+
+  .data-table-head,
+  .data-table-row {
+    gap: var(--space-3);
+    padding: var(--space-2) var(--space-3);
+  }
+
+  .data-table-head {
+    padding-bottom: var(--space-2);
+  }
+
+  .data-table-row {
+    padding: var(--space-3) var(--space-2);
   }
 }
 </style>

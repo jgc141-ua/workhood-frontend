@@ -1,5 +1,6 @@
 <script setup>
-import { computed, inject } from 'vue'
+import { computed, inject, onMounted, ref } from 'vue'
+
 import { Bar } from 'vue-chartjs'
 import {
   Chart as ChartJS,
@@ -14,11 +15,34 @@ import { IonPage, IonContent } from '@ionic/vue'
 import Card from '@/components/Card.vue'
 import ActionCard from '@/components/ActionCard.vue'
 import MobileHeader from '@/components/MobileHeader.vue'
-import { useAuthStore } from '@/stores/authStore'
 import { useMeStore } from '@/stores/meStore'
+import { useMembershipStore } from '@/stores/membershipStore'
+import SubscribeMembershipModal from '@/components/SubscribeMembershipModal.vue'
 
-const auth = useAuthStore()
 const meStore = useMeStore()
+const membershipStore = useMembershipStore()
+
+const isSubscribeModalOpen = ref(false)
+const isAdmin = computed(() => meStore.user?.role === 'ADMIN')
+
+// Carga de la membresía del usuario autenticado
+onMounted(() => {
+  if (!isAdmin.value) {
+    membershipStore.fetchMyMembership().catch(() => { })
+  }
+})
+
+function openSubscribeModal() {
+  isSubscribeModalOpen.value = true
+}
+
+function closeSubscribeModal() {
+  isSubscribeModalOpen.value = false
+}
+
+async function onSubscribed() {
+  await membershipStore.fetchMyMembership()
+}
 
 ChartJS.register(Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale)
 
@@ -104,15 +128,57 @@ const brand = inject('BRAND')
   <ion-page>
     <MobileHeader title="Dashboard" />
     <ion-content :fullscreen="true" class="ion-padding">
+      <!-- Cabecera del dashboard -->
       <div class="main-header page-header">
         <p class="eyebrow">VISTA GENERAL DEL {{ meStore.user?.role.toUpperCase() }}</p>
         <h2 class="title">Bienvenido a {{ brand }}, {{ meStore.user?.first_name }}</h2>
       </div>
 
+      <!-- Modal de suscripción -->
+      <SubscribeMembershipModal :show="isSubscribeModalOpen" @close="closeSubscribeModal" @subscribed="onSubscribed" />
+
+      <!-- Alerta de membresía inactiva -->
+      <section v-if="!isAdmin && !membershipStore.loading && !membershipStore.hasActiveMembership"
+        class="card membership-alert">
+        <div class="membership-alert-content">
+          <div>
+            <h3>No tienes una membresía activa</h3>
+            <p>Suscríbete ahora para poder acceder a los recursos del espacio.</p>
+          </div>
+          <ion-button class="btn-primary pill-subscribe" type="button" @click="openSubscribeModal">
+            Suscribirme
+          </ion-button>
+        </div>
+      </section>
+
+      <!-- Tarjeta de membresía activa -->
+      <section v-else-if="membershipStore.hasActiveMembership" class="card membership-active">
+        <div class="membership-active-content">
+          <div>
+            <h3>Membresía activa</h3>
+            <p>
+              {{ membershipStore.myMembership.membership_type_name }}
+              <span v-if="membershipStore.myMembership.resource_name">
+                — {{ membershipStore.myMembership.resource_name }}
+              </span>
+            </p>
+          </div>
+          <div class="membership-active-meta">
+            <span class="pill-button pill-button-success pill-subscribe">Activa hasta {{ new
+              Date(membershipStore.myMembership.end_date).toLocaleDateString() }}</span>
+            <span class="pill-button" :class="membershipStore.myMembership.auto_renew ? 'pill-button-success' : 'pill-button-warn'">
+              {{ membershipStore.myMembership.auto_renew ? 'Renovación automática' : 'Sin renovación automática' }}
+            </span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Grid de estadísticas -->
       <section class="statsGrid">
         <Card v-for="stat in stats" :key="stat.label" :label="stat.label" :value="stat.value" :delta="stat.delta" />
       </section>
 
+      <!-- Contenido principal: gráfico y paneles laterales -->
       <section class="contentGrid">
         <div>
           <section class="card panel">
@@ -130,6 +196,7 @@ const brand = inject('BRAND')
         </div>
 
         <aside>
+          <!-- Panel de acciones pendientes -->
           <div class="card panel actions" style="background-color: #e8e8ec">
             <div class="header">
               <h3>Action Required</h3>
@@ -137,6 +204,7 @@ const brand = inject('BRAND')
             <ActionCard v-for="action in actions" :key="action.title" v-bind="action" />
           </div>
 
+          <!-- Panel de actividad reciente -->
           <section class="card panel activities">
             <div class="header">
               <h3>Recent Activity</h3>
@@ -153,15 +221,18 @@ const brand = inject('BRAND')
 </template>
 
 <style scoped>
+/* Panel de actividad */
 .activities :deep(.card) {
   box-shadow: none;
   padding: 10px;
 }
 
+/* Cabecera del dashboard */
 .main-header {
   margin-bottom: 24px;
 }
 
+/* Cabeceras de panel */
 .header {
   display: flex;
   align-items: center;
@@ -182,6 +253,7 @@ const brand = inject('BRAND')
   font-size: 13px;
 }
 
+/* Paneles y estadísticas */
 .actions,
 .activities {
   padding-bottom: 14px;
@@ -207,11 +279,17 @@ const brand = inject('BRAND')
   align-items: center;
 }
 
+.pill-subscribe {
+  max-width: max-content;
+  color: white;
+}
+
 .activityList {
   display: flex;
   flex-direction: column;
 }
 
+/* Responsive */
 @media (max-width: 1024px) {
   .statsGrid {
     grid-template-columns: repeat(2, 1fr);
@@ -222,6 +300,52 @@ const brand = inject('BRAND')
   .page-header {
     display: none;
   }
+}
+
+.membership-alert,
+.membership-active,
+.membership-admin {
+  margin-bottom: var(--space-6);
+}
+
+.membership-admin h3 {
+  margin: 0 0 var(--space-1);
+  font-size: 1.1rem;
+}
+
+.membership-admin p {
+  margin: 0;
+  color: #6b7280;
+  font-size: 0.95rem;
+}
+
+.membership-alert-content,
+.membership-active-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.membership-active-meta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.membership-alert h3,
+.membership-active h3 {
+  margin: 0 0 var(--space-1);
+  font-size: 1.1rem;
+}
+
+.membership-alert p,
+.membership-active p {
+  margin: 0;
+  color: #6b7280;
+  font-size: 0.95rem;
 }
 
 @media (max-width: 600px) {

@@ -3,27 +3,46 @@ const PORT = import.meta.env.PORT || '8000'
 const BASE = HOST + ':' + PORT
 
 export const ENDPOINTS = {
+  // Accounts
   login: BASE + '/accounts/login/',
   signup: BASE + '/accounts/signup/',
   refresh: BASE + '/accounts/refresh/',
   me: BASE + '/accounts/me/',
   meUpdate: BASE + '/accounts/me/update/',
+
+  // Members
   members: BASE + '/members/all/',
   memberDetail: BASE + '/members/',
   memberDelete: BASE + '/members/delete/',
+
+  // MembreshipTypes
   membershipTypes: BASE + '/membership-types/all/',
   membershipTypesActive: BASE + '/membership-types/active/',
   membershipTypeCreate: BASE + '/membership-types/create/',
   membershipTypeUpdate: BASE + '/membership-types/update/',
   membershipTypeDelete: BASE + '/membership-types/delete/',
+
+  // Membership
+  myMembership: BASE + '/memberships/my-membership/',
+  availableResources: BASE + '/memberships/available-resources/',
+  subscribe: BASE + '/memberships/subscribe/',
+  memberMembership: BASE + '/memberships/member-membership/',
+  subscribeMember: BASE + '/memberships/subscribe-member/',
+  cancelMembership: BASE + '/memberships/cancel-membership/',
+
+  // Benefits
   benefits: BASE + '/benefits/all/',
   benefitCreate: BASE + '/benefits/create/',
   benefitUpdate: BASE + '/benefits/update/',
   benefitDelete: BASE + '/benefits/delete/',
+
+  // ResourceTypes
   resourceTypes: BASE + '/resource-types/all/',
   resourceTypeCreate: BASE + '/resource-types/create/',
   resourceTypeUpdate: BASE + '/resource-types/update/',
   resourceTypeDelete: BASE + '/resource-types/delete/',
+
+  // Resources
   resources: BASE + '/resources/all/',
   resourceCreate: BASE + '/resources/create/',
   resourceUpdate: BASE + '/resources/update/',

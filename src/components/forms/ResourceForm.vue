@@ -1,9 +1,10 @@
 <script setup>
-import { ref, watch, computed } from 'vue'
+import { ref, watch, computed, onMounted } from 'vue'
 import FormInput from '@/components/forms/FormInput.vue'
 import FormActions from '@/components/forms/FormActions.vue'
 import PrettyCheckbox from '@/components/PrettyCheckbox.vue'
 import PrettyInputSelector from '@/components/PrettyInputSelector.vue'
+import { useResourceTypeStore } from '@/stores/resourceTypeStore'
 
 const props = defineProps({
   modelValue: {
@@ -17,15 +18,17 @@ const props = defineProps({
       resource_type: '',
     }),
   },
-  resourceTypeOptions: {
-    type: Array,
-    default: () => [],
-  },
   isEdit: {
     type: Boolean,
     default: false,
   },
 })
+
+const resourceTypeStore = useResourceTypeStore()
+
+const resourceTypeOptions = computed(() =>
+  resourceTypeStore.allResourceTypes.map((rt) => ({ value: rt.id, label: rt.name })),
+)
 
 const emit = defineEmits(['submit', 'cancel', 'update:modelValue'])
 
@@ -38,6 +41,7 @@ const form = ref({
   resource_type: '',
 })
 
+// Sincroniza el formulario con los datos recibidos
 function syncForm(val) {
   form.value = {
     name: val.name ?? '',
@@ -50,6 +54,10 @@ function syncForm(val) {
 }
 
 watch(() => props.modelValue, syncForm, { deep: true, immediate: true })
+
+onMounted(() => {
+  resourceTypeStore.fetchResourceTypes().catch(() => { })
+})
 
 const trimmedName = computed(() => form.value.name?.trim() || '')
 const trimmedDescription = computed(() => form.value.description?.trim() || '')
@@ -65,6 +73,7 @@ const canSubmit = computed(() => {
   )
 })
 
+// Envía el formulario con los datos del recurso
 function handleSubmit() {
   const payload = {
     name: trimmedName.value,

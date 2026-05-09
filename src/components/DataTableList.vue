@@ -34,7 +34,8 @@ const props = defineProps({
 
 const emit = defineEmits(['prev-page', 'next-page'])
 
-const getItemKey = (item, index) => {
+// Genera una clave única para cada fila
+function getItemKey(item, index) {
   if (props.keyField && item[props.keyField] != null) {
     return item[props.keyField]
   }
@@ -109,20 +110,30 @@ const getItemKey = (item, index) => {
   display: flex;
   justify-content: space-between;
   gap: var(--space-4);
-  padding: var(--space-4) 0;
-  border-top: 1px solid var(--outline-variant);
+  padding: var(--space-4);
+  border-bottom: 1px solid var(--outline-variant);
   min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
+  flex-wrap: nowrap;
+  align-items: center;
   overflow-wrap: break-word;
   word-break: break-word;
 }
 
 .data-table-list-item:first-child {
-  border-top: 0;
+  padding-top: var(--space-2);
+}
+
+.data-table-list-item:last-child {
+  border-bottom: 0;
 }
 
 @media (max-width: 600px) {
   .data-table-list-item {
     gap: var(--space-3);
+    flex-wrap: wrap;
+    align-items: flex-start;
   }
 
   .data-table-pagination {

@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, onUnmounted } from 'vue'
 import IconMoreActions from '@/assets/icons/IconMoreActions.vue'
 import { useClickOutside } from '@/composables/useClickOutside'
 
@@ -14,18 +14,62 @@ const emit = defineEmits(['select'])
 
 const open = ref(false)
 const wrapperRef = ref(null)
+const menuStyle = ref({})
+let scrollListener = null
 
 useClickOutside(wrapperRef, () => {
   if (open.value) open.value = false
 })
 
+// Calcula la posición del menú desplegable
+function updateMenuStyle() {
+  if (!wrapperRef.value) return
+
+  const rect = wrapperRef.value.getBoundingClientRect()
+  const estimatedMenuHeight = 44 * props.options.length + 12
+  const spaceBelow = window.innerHeight - rect.bottom
+  const showAbove = spaceBelow < estimatedMenuHeight && rect.top > estimatedMenuHeight
+
+  menuStyle.value = {
+    position: 'fixed',
+    right: `${window.innerWidth - rect.right}px`,
+    top: showAbove
+      ? `${rect.top - 6}px`
+      : `${rect.bottom + 6}px`,
+    transform: showAbove ? 'translateY(-100%)' : 'none',
+    zIndex: 9999,
+  }
+}
+
+function removeScrollListener() {
+  if (scrollListener) {
+    window.removeEventListener('scroll', scrollListener, true)
+    scrollListener = null
+  }
+}
+
+// Abre o cierra el menú de acciones
 function toggle() {
+  if (!open.value) {
+    updateMenuStyle()
+    scrollListener = () => {
+      open.value = false
+    }
+    window.addEventListener('scroll', scrollListener, true)
+  } else {
+    removeScrollListener()
+  }
   open.value = !open.value
 }
 
 function close() {
   open.value = false
+  removeScrollListener()
 }
+
+onUnmounted(() => {
+  removeScrollListener()
+})
 
 function handleOption(option) {
   close()
@@ -35,12 +79,13 @@ function handleOption(option) {
 
 <template>
   <div ref="wrapperRef" class="moreActionsWrap" tabindex="-1">
-    <button class="btn-action moreActionsBtn" type="button" @click.stop="toggle" aria-haspopup="true" :aria-expanded="open">
+    <button class="btn-action moreActionsBtn" type="button" @click.stop="toggle" aria-haspopup="true"
+      :aria-expanded="open">
       <IconMoreActions />
     </button>
 
     <transition name="menu">
-      <div v-if="open && props.options.length" class="menu" role="menu">
+      <div v-if="open && props.options.length" class="menu" role="menu" :style="menuStyle">
         <button v-for="(option, index) in props.options" :key="index" class="menuItem"
           :class="{ 'menuItem-danger': option.danger }" role="menuitem" type="button" @click="handleOption(option)">
           <component v-if="option.icon" :is="option.icon" class="menuItemIcon" />
@@ -63,9 +108,6 @@ function handleOption(option) {
 }
 
 .menu {
-  position: absolute;
-  top: calc(100% + 6px);
-  right: 0;
   min-width: 160px;
   padding: 6px;
   background: var(--surface-container-lowest);
@@ -75,7 +117,6 @@ function handleOption(option) {
   display: flex;
   flex-direction: column;
   gap: 2px;
-  z-index: 100;
 }
 
 .menuItem {

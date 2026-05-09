@@ -20,7 +20,8 @@ const touched = ref({})
 
 const postalCodeRegex = /^[0-9]{5}$/
 
-const validateField = (fieldName) => {
+// Valida un campo de dirección
+function validateField(fieldName) {
   const value = props.form[fieldName]
   errors.value[fieldName] = ''
 
@@ -34,14 +35,16 @@ const validateField = (fieldName) => {
   }
 }
 
-const checkValidity = () => {
+// Emite el estado global de validez del formulario
+function checkValidity() {
   const hasErrors = Object.values(errors.value).some((err) => err !== '')
   const hasTouched = Object.keys(touched.value).length >= 0
 
   emit('isValid', !hasErrors && hasTouched)
 }
 
-const verifyValidity = () => {
+// Fuerza la validación de todos los campos de dirección
+function verifyValidity() {
   const fields = ['street', 'city', 'state', 'postal_code', 'country']
 
   fields.forEach(field => {
@@ -52,13 +55,13 @@ const verifyValidity = () => {
   checkValidity()
 }
 
-const handleBlur = (fieldName) => {
+function handleBlur(fieldName) {
   touched.value[fieldName] = true
   validateField(fieldName)
   checkValidity()
 }
 
-const handleInput = (fieldName) => {
+function handleInput(fieldName) {
   if (errors.value[fieldName]) {
     errors.value[fieldName] = ''
   }

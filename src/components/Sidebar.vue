@@ -2,50 +2,53 @@
 import { useRouter, useRoute } from 'vue-router'
 import { menuController } from '@ionic/vue'
 import { IonContent, IonList, IonItem, IonButton } from '@ionic/vue'
-import IconBurger from '@/components/icons/IconBurguer.vue'
-import IconDashboard from '@/components/icons/IconDashboard.vue'
-import IconDashboardFilled from '@/components/icons/IconDashboardFilled.vue'
-import IconBookings from '@/components/icons/IconBookings.vue'
-import IconBookingsFilled from '@/components/icons/IconBookingsFilled.vue'
-import IconMembers from '@/components/icons/IconMembers.vue'
-import IconMembersFilled from '@/components/icons/IconMembersFilled.vue'
-import IconReport from '@/components/icons/IconReport.vue'
-import IconReportFilled from '@/components/icons/IconReportFilled.vue'
-import IconLogout from '@/components/icons/IconLogout.vue'
+import IconBurger from '@/assets/icons/IconBurguer.vue'
+import IconDashboard from '@/assets/icons/IconDashboard.vue'
+import IconDashboardFilled from '@/assets/icons/IconDashboardFilled.vue'
+import IconBookings from '@/assets/icons/IconBookings.vue'
+import IconBookingsFilled from '@/assets/icons/IconBookingsFilled.vue'
+import IconMembers from '@/assets/icons/IconMembers.vue'
+import IconMembersFilled from '@/assets/icons/IconMembersFilled.vue'
+import IconReport from '@/assets/icons/IconReport.vue'
+import IconReportFilled from '@/assets/icons/IconReportFilled.vue'
+import IconLogout from '@/assets/icons/IconLogout.vue'
 import { useAuthStore } from '@/stores/authStore'
 import { useMeStore } from '@/stores/meStore'
-import IconProfile from '@/components/icons/IconProfile.vue'
-import IconProfileFilled from '@/components/icons/IconProfileFilled.vue'
+import IconProfile from '@/assets/icons/IconProfile.vue'
+import IconProfileFilled from '@/assets/icons/IconProfileFilled.vue'
 
 import { ref, computed, inject } from 'vue'
-import IconCatalog from './icons/IconCatalog.vue'
-import IconCatalogFilled from './icons/IconCatalogFilled.vue'
+import IconCatalog from '../assets/icons/IconCatalog.vue'
+import IconCatalogFilled from '../assets/icons/IconCatalogFilled.vue'
 
 const route = useRoute()
 const router = useRouter()
 
+const emit = defineEmits(['collapse-change'])
+
+// Estado del sidebar y detección de vista móvil
 const isCollapsed = ref(true)
-const toggleSidebar = () => {
+const isMobile = ref(window.innerWidth < 992)
+
+function toggleSidebar() {
   isCollapsed.value = !isCollapsed.value
   emit('collapse-change', isCollapsed.value)
 }
 
-const emit = defineEmits(['collapse-change'])
-
-// Detectamos si estamos en móvil para forzar el menú expandido
-const isMobile = ref(window.innerWidth < 992)
 window.addEventListener('resize', () => {
   isMobile.value = window.innerWidth < 992
 })
+
 const showText = computed(() => !isCollapsed.value || isMobile.value)
 
-const closeMenu = async () => {
+async function closeMenu() {
   await menuController.close('main-menu')
 }
 
 const meStore = useMeStore()
 const auth = useAuthStore()
 
+// Items de navegación según el rol del usuario
 const items = computed(() => {
   const baseItems = [
     { label: 'Dashboard', to: '/', icon: IconDashboard, iconFilled: IconDashboardFilled },
@@ -55,8 +58,8 @@ const items = computed(() => {
 
   if (meStore.user?.role === 'ADMIN') {
     baseItems.splice(2, 0,
-      { label: 'Catálogo', to: '/catalog', icon: IconCatalog, iconFilled: IconCatalogFilled },
       { label: 'Members', to: '/members', icon: IconMembers, iconFilled: IconMembersFilled },
+      { label: 'Catálogo', to: '/catalog', icon: IconCatalog, iconFilled: IconCatalogFilled },
       { label: 'Reports', to: '/reports', icon: IconReport, iconFilled: IconReportFilled }
     )
   }
@@ -64,7 +67,7 @@ const items = computed(() => {
   return baseItems
 })
 
-const handleLogout = async () => {
+async function handleLogout() {
   if (isMobile.value) await closeMenu()
   await auth.logout()
   router.push('/login')

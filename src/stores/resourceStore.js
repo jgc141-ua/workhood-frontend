@@ -3,6 +3,7 @@ import { ref, computed } from 'vue'
 import { ENDPOINTS } from '@/config/api'
 import { useTokenStore } from './tokenStore'
 import { apiFetch } from '@/composables/apiClient'
+import { checkResponse } from '@/composables/checkResponse'
 
 export const useResourceStore = defineStore('resources', () => {
   // State
@@ -22,26 +23,19 @@ export const useResourceStore = defineStore('resources', () => {
 
   const tokenStore = useTokenStore()
 
-  const checkResponse = async (response, defaultMsg) => {
-    if (!response.ok) {
-      const data = await response.json().catch(() => ({}))
-      throw new Error(data.detail || defaultMsg)
-    }
-  }
-
-  // Setters
-  const setPage = async (newPage) => {
+  // Helpers
+  async function setPage(newPage) {
     if (newPage < 1) return
     await fetchResources({ page: newPage })
   }
 
-  const setPageSize = async (newPageSize) => {
+  async function setPageSize(newPageSize) {
     pageSize.value = newPageSize
     await fetchResources({ page: 1 })
   }
 
   // Actions
-  const fetchResources = async (params = {}) => {
+  async function fetchResources(params = {}) {
     loading.value = true
     error.value = null
     try {
@@ -72,7 +66,7 @@ export const useResourceStore = defineStore('resources', () => {
     }
   }
 
-  const createResource = async (payload) => {
+  async function createResource(payload) {
     loading.value = true
     error.value = null
     try {
@@ -99,7 +93,7 @@ export const useResourceStore = defineStore('resources', () => {
     }
   }
 
-  const updateResource = async (payload) => {
+  async function updateResource(payload) {
     loading.value = true
     error.value = null
     try {
@@ -128,7 +122,7 @@ export const useResourceStore = defineStore('resources', () => {
     }
   }
 
-  const deleteResource = async (id) => {
+  async function deleteResource(id) {
     loading.value = true
     error.value = null
     try {
@@ -154,7 +148,7 @@ export const useResourceStore = defineStore('resources', () => {
     }
   }
 
-  const clearResources = () => {
+  function clearResources() {
     resources.value = []
     error.value = null
     count.value = 0

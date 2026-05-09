@@ -24,7 +24,7 @@ const personalFormRef = useTemplateRef('personalForm')
 const addressFormRef = useTemplateRef('addressForm')
 const billingAddressFormRef = useTemplateRef('billingAddressForm')
 
-// Parsear el teléfono existente para inicializar phoneData
+// Extrae el prefiso y el número de un teléfono combinado
 function parsePhone(phone) {
   if (!phone) return { phoneCode: '+34', phone: '' }
   const match = phone.match(/\+(\d{1,4})\s*(.*)/)
@@ -66,6 +66,7 @@ const isStepValid = computed(() => {
   return false
 })
 
+// Avanza al siguiente paso validando el actual
 async function next() {
   if (step.value === 1) personalFormRef.value?.verifyValidity()
   if (step.value === 2) {
@@ -82,6 +83,7 @@ async function next() {
   }
 }
 
+// Retrocede al paso anterior
 async function prev() {
   if (step.value > 1) step.value--
   if (step.value === 2) {
@@ -93,6 +95,7 @@ async function prev() {
   }
 }
 
+// Envía el formulario de edición completo
 function handleSubmit() {
   if (form.value.billing_same_as_address) {
     form.value.billing_address = form.value.address
@@ -111,7 +114,7 @@ watch(
   },
 )
 
-// Actualizar phone cuando cambia phoneData
+// Actualiza el teléfono cuando cambia el prefijo o el número
 watch(phoneData, () => {
   form.value.phone = phoneData.value.phoneCode + ' ' + phoneData.value.phone.trim()
 }, { deep: true })
@@ -154,8 +157,8 @@ onMounted(async () => {
         <ion-button v-if="step !== 1" type="button" class="btn-secondary" @click="prev()">Atrás</ion-button>
         <ion-button v-if="step !== 2" type="button" class="btn-primary" :disabled="!isStepValid"
           @click="next()">Siguiente</ion-button>
-        <ion-button v-if="step === 2" type="submit" class="btn-primary"
-          :disabled="!isStepValid">Guardar cambios</ion-button>
+        <ion-button v-if="step === 2" type="submit" class="btn-primary" :disabled="!isStepValid">Guardar
+          cambios</ion-button>
       </div>
     </form>
   </div>

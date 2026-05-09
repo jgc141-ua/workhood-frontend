@@ -1,6 +1,6 @@
 <script setup>
 import { menuController } from '@ionic/vue'
-import IconBurger from '@/components/icons/IconBurguer.vue'
+import IconBurger from '@/assets/icons/IconBurguer.vue'
 
 defineProps({
   title: {

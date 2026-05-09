@@ -12,6 +12,10 @@ const props = defineProps({
     type: Array,
     default: () => [],
   },
+  imgs: {
+    type: String,
+    required: false
+  },
   label: {
     type: String,
     default: '',
@@ -31,18 +35,17 @@ const props = defineProps({
   disabled: {
     type: Boolean,
     default: false,
-  },
+  }
 })
 
 const emit = defineEmits(['update:modelValue'])
 
 const isOpen = ref(false)
 const search = ref('')
-  const dropdownRef = ref(null)
+const dropdownRef = ref(null)
 const triggerId = `selector-${Math.random().toString(36).slice(2, 9)}`
 
 const selectedOption = computed(() =>
-
   props.options.find((option) => option.value === props.modelValue)
 )
 
@@ -54,12 +57,14 @@ const filteredOptions = computed(() => {
   )
 })
 
+// Abre o cierra el dropdown
 function toggle() {
   if (props.disabled) return
   isOpen.value = !isOpen.value
   if (isOpen.value) search.value = ''
 }
 
+// Selecciona una opción y cierra el dropdown
 function select(option) {
   emit('update:modelValue', option.value)
   search.value = ''
@@ -78,6 +83,7 @@ useClickOutside(dropdownRef, close)
     <label v-if="label" :for="triggerId">{{ label }}</label>
 
     <button :id="triggerId" type="button" class="selector-trigger" :disabled="disabled" @click="toggle">
+      <img class="selector-img" :src="selectedOption?.imgs || ''">
       <span class="selector-value" :class="{ placeholder: !selectedOption }">
         {{ selectedOption?.label || placeholder }}
       </span>
@@ -90,7 +96,7 @@ useClickOutside(dropdownRef, close)
       <ul class="selector-options">
         <li v-for="option in filteredOptions" :key="option.value" class="selector-option"
           :class="{ selected: option.value === modelValue }" @click="select(option)">
-          {{ option.label }}
+          <img class="selector-img-option" :src="option?.imgs || ''">{{ option.label }}
         </li>
         <li v-if="!filteredOptions.length" class="selector-option selector-option--empty">
           No se encontraron resultados
@@ -136,6 +142,14 @@ useClickOutside(dropdownRef, close)
 .selector-trigger:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+.selector-img,
+.selector-img-option {
+  width: 20px;
+  height: 15px;
+  border-radius: 2px;
+  object-fit: cover;
 }
 
 .selector-value {

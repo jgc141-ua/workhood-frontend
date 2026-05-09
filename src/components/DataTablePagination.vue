@@ -124,10 +124,13 @@ const canNext = computed(() => paginationInfo.value.page < paginationInfo.value.
 }
 
 @keyframes pulse-dot {
-  0%, 100% {
+
+  0%,
+  100% {
     opacity: 0.4;
     transform: scale(0.8);
   }
+
   50% {
     opacity: 1;
     transform: scale(1);

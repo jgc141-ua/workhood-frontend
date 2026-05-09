@@ -1,8 +1,8 @@
 <script setup>
-import { onMounted, ref, watch, nextTick, onUnmounted } from 'vue'
+import { onMounted, ref, watch, computed } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useCountryPhoneStore } from '@/stores/countryPhoneStore'
-import IconDropdown from './icons/IconDropdown.vue'
+import PrettyInputSelector from '@/components/PrettyInputSelector.vue'
 
 const props = defineProps({
     phoneData: {
@@ -24,61 +24,27 @@ const emit = defineEmits(['field-blur', 'field-input'])
 const countryPhoneStore = useCountryPhoneStore()
 const { countries, selectedCountry } = storeToRefs(countryPhoneStore)
 
-const isOpen = ref(false)
-const triggerRef = ref(null)
-const dropdownRef = ref(null)
-const dropdownStyle = ref({})
-
-function updatePosition() {
-  if (!triggerRef.value) return
-  const rect = triggerRef.value.getBoundingClientRect()
-  dropdownStyle.value = {
-    position: 'fixed',
-    top: `${rect.bottom}px`,
-    left: `${rect.left}px`,
-    width: `${rect.width}px`,
-  }
-}
-
-function addListeners() {
-  window.addEventListener('scroll', updatePosition, true)
-  window.addEventListener('resize', updatePosition)
-  document.addEventListener('click', handleClickOutside)
-}
-
-function removeListeners() {
-  window.removeEventListener('scroll', updatePosition, true)
-  window.removeEventListener('resize', updatePosition)
-  document.removeEventListener('click', handleClickOutside)
-}
-
-function handleClickOutside(event) {
-  const clickTrigger = triggerRef.value?.contains(event.target)
-  const clickDropdown = dropdownRef.value?.contains(event.target)
-  if (!clickTrigger && !clickDropdown) {
-    isOpen.value = false
-  }
-}
-
-watch(isOpen, (open) => {
-  if (open) {
-    nextTick(updatePosition)
-    addListeners()
-  } else {
-    removeListeners()
-  }
-})
-
-onUnmounted(removeListeners)
-
 const flagUrl = (code) => `https://flagcdn.com/24x18/${code.toLowerCase()}.png`
 
-const selectCountry = (country) => {
-    countryPhoneStore.selectCountry(country)
-    isOpen.value = false
-    props.phoneData.phoneCode = country.phoneCode
-    emit('field-input', 'phone')
-}
+const countryOptions = computed(() =>
+    countries.value.map((country) => ({
+        value: country.code,
+        label: country.phoneCode,
+        imgs: flagUrl(country.code)
+    }))
+)
+
+const selectedCountryCode = computed({
+    get: () => selectedCountry.value.code,
+    set: (code) => {
+        const country = countries.value.find((c) => c.code === code)
+        if (!country) return
+
+        countryPhoneStore.selectCountry(country)
+        props.phoneData.phoneCode = country.phoneCode
+        emit('field-input', 'phone')
+    },
+})
 
 onMounted(async () => {
     await countryPhoneStore.fetchAllCountries()
@@ -98,22 +64,10 @@ watch(() => props.phoneData.phoneCode, (phoneCode) => {
         <label for="phone">Teléfono</label>
         <div class="phone-field">
             <div class="country-field">
-                <div ref="triggerRef" class="country-input" @click="isOpen = !isOpen">
-                    <img :src="flagUrl(selectedCountry.code)" class="flag" />
-                    <span class="code">{{ selectedCountry.phoneCode }}</span>
-                    <IconDropdown :isOpen="isOpen" />
-                </div>
-                <teleport to="body" v-if="isOpen">
-                    <div ref="dropdownRef" class="dropdown" :style="dropdownStyle" @click.stop>
-                        <div v-for="country in countries" :key="country.code" class="option"
-                            @click="selectCountry(country)">
-                            <img :src="flagUrl(country.code)" class="flag" />
-                            <span class="code">{{ country.phoneCode }}</span>
-                        </div>
-                    </div>
-                </teleport>
+                <PrettyInputSelector class="phone-country-selector" v-model="selectedCountryCode"
+                    :options="countryOptions" placeholder="País" search-placeholder="Buscar país..." />
             </div>
-            <div class="input-wrap">
+            <div class="input-wrap" style="height: 51px;">
                 <input id="phone" v-model="phoneData.phone" type="tel" placeholder="600 000 000" required
                     @blur="emit('field-blur', 'phone')" @input="emit('field-input', 'phone')" />
             </div>
@@ -129,7 +83,18 @@ watch(() => props.phoneData.phoneCode, (phoneCode) => {
     display: flex;
     flex-direction: row;
     gap: 10px;
-    align-items: stretch;
+    margin-bottom: -10px;
+}
+
+.phone-country-selector:deep(.selector-img-option) {
+    margin-right: 15px;
+}
+
+.phone-country-selector:deep(.selector-option),
+.phone-country-selector:deep(.selector-value) {
+    font-weight: 600;
+    font-size: 0.9rem;
+    min-width: 40px;
 }
 
 .input-wrap {
@@ -138,67 +103,8 @@ watch(() => props.phoneData.phoneCode, (phoneCode) => {
 }
 
 .country-field {
-    position: relative;
-    text-align: center;
-    border: 1px solid #ddd;
-    border-radius: var(--radius-md);
-    background: white;
-}
-
-.country-input {
-    display: flex;
-    align-items: center;
-    gap: var(--space-1);
-    padding: var(--space-3) var(--space-4);
-    cursor: pointer;
-    height: 100%;
-    border-radius: inherit;
-}
-
-.country-input:hover {
-    background: #f8f9fa;
-}
-
-.flag {
-    width: 20px;
-    height: 15px;
-    border-radius: 2px;
-    object-fit: cover;
-}
-
-.code {
-    font-weight: 600;
-    font-size: 0.9rem;
-    min-width: 40px;
-}
-
-.dropdown {
-    max-height: 280px;
-    overflow-y: auto;
-    background: white;
-    border: 1px solid #ddd;
-    border-radius: 0 0 8px 8px;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-    z-index: 1000;
-    box-sizing: border-box;
-}
-
-.option {
-    display: flex;
-    align-items: center;
-    gap: var(--space-3);
-    padding: var(--space-3) var(--space-4);
-    cursor: pointer;
-    transition: background 0.2s;
-    border-bottom: 1px solid #f5f5f5;
-}
-
-.option:hover {
-    background: #f8f9fa;
-}
-
-.option .code {
-    font-size: 0.9rem;
-    font-weight: 600;
+    flex: 0 0 auto;
+    min-width: 130px;
+    width: 130px;
 }
 </style>

@@ -5,6 +5,7 @@ import { useTokenStore } from './tokenStore'
 import { useMeStore } from './meStore'
 
 export const useAuthStore = defineStore('auth', () => {
+  // State
   const loading = ref(false)
   const errors = ref(null)
   const success = ref(false)
@@ -12,8 +13,10 @@ export const useAuthStore = defineStore('auth', () => {
   const tokenStore = useTokenStore()
   const meStore = useMeStore()
 
+  // Getters
   const isAuthenticated = computed(() => tokenStore.isAuthenticated)
 
+  // Actions
   async function register(form) {
     loading.value = true
     errors.value = null

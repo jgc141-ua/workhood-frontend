@@ -19,7 +19,8 @@ const emit = defineEmits(['isValid'])
 const errors = ref({})
 const touched = ref({})
 
-const validateField = (fieldName) => {
+// Valida un campo concreto según su tipo
+function validateField(fieldName) {
   const value = props.form[fieldName]
   errors.value[fieldName] = ''
 
@@ -50,13 +51,15 @@ const validateField = (fieldName) => {
   }
 }
 
-const checkValidity = () => {
+// Emite el estado global de validez del formulario
+function checkValidity() {
   const hasErrors = Object.values(errors.value).some((err) => err !== '')
   const hasTouched = Object.keys(touched.value).length > 0
   emit('isValid', !hasErrors && hasTouched)
 }
 
-const verifyValidity = () => {
+// Fuerza la validación de todos los campos
+function verifyValidity() {
   handleBlur('email')
   handleBlur('first_name')
   handleBlur('last_name')
@@ -65,12 +68,12 @@ const verifyValidity = () => {
   checkValidity()
 }
 
-const handleBlur = (fieldName) => {
+function handleBlur(fieldName) {
   touched.value[fieldName] = true
   validateField(fieldName)
 }
 
-const handleInput = (fieldName) => {
+function handleInput(fieldName) {
   if (fieldName == "phone") {
     props.form.phone = props.phoneData.phoneCode + " " + props.phoneData.phone.trim()
   }
