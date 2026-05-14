@@ -8,6 +8,7 @@ import AppModal from '@/components/AppModal.vue'
 import ConfirmModal from '@/components/ConfirmModal.vue'
 import BenefitForm from '@/components/forms/BenefitForm.vue'
 import { useBenefitStore } from '@/stores/benefitStore'
+import { useMembershipTypeStore } from '@/stores/membershipTypeStore'
 import { showToast } from '@/composables/toast'
 
 const props = defineProps({
@@ -17,6 +18,7 @@ const props = defineProps({
 const emit = defineEmits(['update:isCreateOpen'])
 
 const benefitStore = useBenefitStore()
+const membershipTypeStore = useMembershipTypeStore()
 
 const moreActionsOpts = [
   { icon: IconEdit, label: 'Editar', action: 'edit', danger: false },
@@ -94,6 +96,7 @@ async function handleDelete() {
   if (!benefitToDelete.value) return
   try {
     await benefitStore.deleteBenefit(benefitToDelete.value.name)
+    await membershipTypeStore.fetchMembershipTypes()
     showToast('Beneficio eliminado correctamente')
   } catch (err) {
     showToast(err.message || 'Error al eliminar el beneficio')
