@@ -13,11 +13,11 @@ defineProps({
   confirmDanger: { type: Boolean, default: true },
 })
 
-defineEmits(['confirm', 'cancel', 'closed'])
+defineEmits(['confirm', 'close', 'after-close'])
 </script>
 
 <template>
-  <AppModal :show="show" :title="title" @close="$emit('closed')">
+  <AppModal :show="show" :title="title" @close="$emit('close')" @after-close="$emit('after-close')">
     <div class="confirm-modal">
       <p class="confirm-modal-text">
         {{ message }}
@@ -27,7 +27,7 @@ defineEmits(['confirm', 'cancel', 'closed'])
     </div>
 
     <template #footer>
-      <ion-button class="btn-secondary" type="button" @click="$emit('cancel')">
+      <ion-button class="btn-secondary" type="button" @click="$emit('close')">
         <span>{{ cancelLabel }}</span>
       </ion-button>
       <ion-button class="btn-primary" :class="{ 'btn-danger': confirmDanger }" type="button" @click="$emit('confirm')">

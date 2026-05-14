@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import { IonPage, IonContent } from '@ionic/vue'
 import MobileHeader from '@/components/MobileHeader.vue'
 import AppModal from '@/components/AppModal.vue'
@@ -12,62 +12,68 @@ import { useBenefitStore } from '@/stores/benefitStore'
 import { useResourceTypeStore } from '@/stores/resourceTypeStore'
 import { useResourceStore } from '@/stores/resourceStore'
 
+// Stores de catálogo
 const membershipTypeStore = useMembershipTypeStore()
 const benefitStore = useBenefitStore()
 const resourceTypeStore = useResourceTypeStore()
 const resourceStore = useResourceStore()
 
-const membershipSectionRef = ref(null)
-const benefitSectionRef = ref(null)
-const resourceTypeSectionRef = ref(null)
-const resourceSectionRef = ref(null)
-
-const resourceTypeOptions = computed(() =>
-  resourceTypeStore.resourceTypes.map((rt) => ({ value: rt.id, label: rt.name }))
-)
+// Estado de apertura de los modales de creación de cada sección
+const isCreateMembershipOpen = ref(false)
+const isCreateBenefitOpen = ref(false)
+const isCreateResourceTypeOpen = ref(false)
+const isCreateResourceOpen = ref(false)
 
 // Modal menú añadir
 const isAddMenuModalOpen = ref(false)
-const openAddMenuModal = () => { isAddMenuModalOpen.value = true }
-const closeAddMenuModal = () => { isAddMenuModalOpen.value = false }
 
+function openAddMenuModal() {
+  isAddMenuModalOpen.value = true
+}
+
+function closeAddMenuModal() {
+  isAddMenuModalOpen.value = false
+}
+
+// Acciones del menú añadir: activan el modal de creación de cada sección
 function addMembership() {
   closeAddMenuModal()
-  membershipSectionRef.value?.openCreateModal()
+  isCreateMembershipOpen.value = true
 }
 
 function addBenefit() {
   closeAddMenuModal()
-  benefitSectionRef.value?.openCreateModal()
+  isCreateBenefitOpen.value = true
 }
 
 function addResourceType() {
   closeAddMenuModal()
-  resourceTypeSectionRef.value?.openCreateModal()
+  isCreateResourceTypeOpen.value = true
 }
 
 function addResource() {
   closeAddMenuModal()
-  resourceSectionRef.value?.openCreateModal()
+  isCreateResourceOpen.value = true
 }
 
+// Carga inicial de los cuatro catálogos
 onMounted(async () => {
-  try {
-    if (!membershipTypeStore.membershipTypes.length) {
-      await membershipTypeStore.fetchMembershipTypes()
-    }
-    if (!benefitStore.benefits.length) {
-      await benefitStore.fetchBenefits()
-    }
-    if (!resourceTypeStore.resourceTypes.length) {
-      await resourceTypeStore.fetchResourceTypes()
-    }
-    if (!resourceStore.resources.length) {
-      await resourceStore.fetchResources()
-    }
-  } catch (err) {
-    // Los stores ya registran el error
+  const promises = []
+
+  if (!membershipTypeStore.membershipTypes.length) {
+    promises.push(membershipTypeStore.fetchMembershipTypes().catch(() => {}))
   }
+  if (!benefitStore.benefits.length) {
+    promises.push(benefitStore.fetchBenefits().catch(() => {}))
+  }
+  if (!resourceTypeStore.resourceTypes.length) {
+    promises.push(resourceTypeStore.fetchResourceTypes().catch(() => {}))
+  }
+  if (!resourceStore.resources.length) {
+    promises.push(resourceStore.fetchResources().catch(() => {}))
+  }
+
+  await Promise.all(promises)
 })
 </script>
 
@@ -76,6 +82,7 @@ onMounted(async () => {
     <MobileHeader title="Memberships" />
 
     <ion-content :fullscreen="true" class="ion-padding">
+      <!-- Encabezado y acción principal -->
       <header class="row-between">
         <div class="page-header">
           <p class="eyebrow">ADMINISTRACIÓN DE RECURSOS Y MEMBRESÍAS</p>
@@ -87,6 +94,7 @@ onMounted(async () => {
         </button>
       </header>
 
+      <!-- Modal: menú de opciones para añadir -->
       <AppModal :show="isAddMenuModalOpen" title="Añadir" @close="closeAddMenuModal">
         <div class="top-actions-modal">
           <button class="btn btn-secondary top-action" type="button" @click="addMembership">
@@ -104,26 +112,30 @@ onMounted(async () => {
         </div>
       </AppModal>
 
+      <!-- Secciones de membresías y beneficios -->
       <section class="contentGrid">
-        <MembershipTypesSection ref="membershipSectionRef" />
-        <BenefitsSection ref="benefitSectionRef" />
+        <MembershipTypesSection :is-create-open="isCreateMembershipOpen" @update:is-create-open="isCreateMembershipOpen = $event" />
+        <BenefitsSection :is-create-open="isCreateBenefitOpen" @update:is-create-open="isCreateBenefitOpen = $event" />
       </section>
 
+      <!-- Secciones de recursos y tipos de recurso -->
       <section class="contentGrid resources-grid">
-        <ResourcesSection ref="resourceSectionRef" :resource-type-options="resourceTypeOptions" />
-        <ResourceTypesSection ref="resourceTypeSectionRef" />
+        <ResourcesSection :is-create-open="isCreateResourceOpen" @update:is-create-open="isCreateResourceOpen = $event" />
+        <ResourceTypesSection :is-create-open="isCreateResourceTypeOpen" @update:is-create-open="isCreateResourceTypeOpen = $event" />
       </section>
     </ion-content>
   </ion-page>
 </template>
 
 <style scoped>
+/* Modal de acciones añadir */
 .top-actions-modal {
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
 }
 
+/* Grid de secciones */
 .contentGrid {
   margin-top: 40px;
   display: grid;
@@ -132,10 +144,15 @@ onMounted(async () => {
   align-items: start;
 }
 
+.contentGrid > * {
+  min-width: 0;
+}
+
 .resources-grid {
   margin-top: var(--space-8);
 }
 
+/* Responsive */
 @media (max-width: 1024px) {
   .contentGrid {
     grid-template-columns: 1fr;

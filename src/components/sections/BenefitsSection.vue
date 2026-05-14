@@ -2,13 +2,19 @@
 import { ref } from 'vue'
 import DataTableList from '@/components/DataTableList.vue'
 import MoreActionsButton from '@/components/MoreActionsButton.vue'
-import IconEdit from '@/components/icons/IconEdit.vue'
-import IconTrash from '@/components/icons/IconTrash.vue'
+import IconEdit from '@/assets/icons/IconEdit.vue'
+import IconTrash from '@/assets/icons/IconTrash.vue'
 import AppModal from '@/components/AppModal.vue'
 import ConfirmModal from '@/components/ConfirmModal.vue'
 import BenefitForm from '@/components/forms/BenefitForm.vue'
 import { useBenefitStore } from '@/stores/benefitStore'
 import { showToast } from '@/composables/toast'
+
+const props = defineProps({
+  isCreateOpen: { type: Boolean, default: false },
+})
+
+const emit = defineEmits(['update:isCreateOpen'])
 
 const benefitStore = useBenefitStore()
 
@@ -17,19 +23,14 @@ const moreActionsOpts = [
   { icon: IconTrash, label: 'Eliminar', action: 'delete', danger: true },
 ]
 
-// Modales
-const isAddModalOpen = ref(false)
+// Estado de los modales y elementos seleccionados
 const isEditModalOpen = ref(false)
 const isDeleteModalOpen = ref(false)
 const selectedBenefit = ref(null)
 const benefitToDelete = ref(null)
 
-function openCreateModal() {
-  isAddModalOpen.value = true
-}
-
 function closeCreateModal() {
-  isAddModalOpen.value = false
+  emit('update:isCreateOpen', false)
 }
 
 function openEditModal(benefit) {
@@ -66,12 +67,7 @@ function handleAction(benefit, option) {
   }
 }
 
-function truncateDescription(text, maxLength = 35) {
-  if (!text) return ''
-  if (text.length <= maxLength) return text
-  return text.slice(0, maxLength).trim() + '...'
-}
-
+// Crea un nuevo beneficio
 async function handleCreate(formData) {
   try {
     await benefitStore.createBenefit(formData)
@@ -82,6 +78,7 @@ async function handleCreate(formData) {
   }
 }
 
+// Actualiza el beneficio seleccionado
 async function handleUpdate(formData) {
   try {
     await benefitStore.updateBenefit(formData)
@@ -92,25 +89,26 @@ async function handleUpdate(formData) {
   }
 }
 
+// Elimina el beneficio seleccionado
 async function handleDelete() {
   if (!benefitToDelete.value) return
   try {
     await benefitStore.deleteBenefit(benefitToDelete.value.name)
     showToast('Beneficio eliminado correctamente')
-    closeDeleteModal()
   } catch (err) {
     showToast(err.message || 'Error al eliminar el beneficio')
+    benefitStore.error = null
   }
-}
 
-defineExpose({ openCreateModal })
+  closeDeleteModal()
+}
 </script>
 
 <template>
   <aside>
     <h2 class="section-title">Beneficios</h2>
 
-    <AppModal :show="isAddModalOpen" title="Añadir beneficio" @close="closeCreateModal">
+    <AppModal :show="props.isCreateOpen" title="Añadir beneficio" @close="closeCreateModal">
       <BenefitForm :is-edit="false" @submit="handleCreate" @cancel="closeCreateModal" />
     </AppModal>
 
@@ -120,18 +118,21 @@ defineExpose({ openCreateModal })
     </AppModal>
 
     <ConfirmModal :show="isDeleteModalOpen" title="Eliminar beneficio"
-      message="¿Estás seguro de que deseas eliminar el beneficio" :item-name="benefitToDelete?.name" confirm-label="Eliminar"
-      @confirm="handleDelete" @cancel="closeDeleteModal" @closed="onDeleteModalClosed" />
+      message="¿Estás seguro de que deseas eliminar el beneficio" :item-name="benefitToDelete?.name"
+      confirm-label="Eliminar" @confirm="handleDelete" @close="closeDeleteModal" @after-close="onDeleteModalClosed" />
 
     <DataTableList class="benefits-table" :columns="[{ key: 'benefit', label: 'BENEFICIO', width: '1fr' }]"
       :items="benefitStore.benefits" key-field="id" :loading="benefitStore.loading" :error="!!benefitStore.error"
       :pagination="{ page: benefitStore.page, pageSize: benefitStore.pageSize, total: benefitStore.count }"
-      @prev-page="benefitStore.setPage(benefitStore.page - 1)"
-      @next-page="benefitStore.setPage(benefitStore.page + 1)">
+      @prev-page="benefitStore.setPage(benefitStore.page - 1)" @next-page="benefitStore.setPage(benefitStore.page + 1)">
       <template #row="{ item }">
         <div class="benefits-text">
-          <h4 class="benefits-name">{{ item.name }}</h4>
-          <p class="benefits-description">{{ truncateDescription(item.description) }}</p>
+          <h4 class="benefits-name text-truncate" :title="item.name">{{ item.name }}</h4>
+          <p v-if="item.description" class="benefits-description text-truncate" :title="item.description">{{
+            item.description }}</p>
+          <p v-if="item.resource_type_name" class="benefits-resource-type">
+            Tipo: {{ item.resource_type_name }}
+          </p>
         </div>
         <div class="benefits-more-actions">
           <div class="pill-button" v-if="item.quantity != null">
@@ -152,20 +153,6 @@ defineExpose({ openCreateModal })
   border-bottom: 0;
 }
 
-.benefits-table :deep(.data-table-list-item) {
-  border-top: 0;
-  border-bottom: 1px solid var(--outline-variant);
-  min-width: 0;
-  width: 100%;
-  box-sizing: border-box;
-  padding: var(--space-4);
-  flex-wrap: wrap;
-}
-
-.benefits-table :deep(.data-table-list-item:last-child) {
-  border-bottom: 0;
-}
-
 .benefits-table :deep(.data-table-pagination) {
   border-top: 1px solid var(--outline-variant);
 }
@@ -173,7 +160,7 @@ defineExpose({ openCreateModal })
 .benefits-text {
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  justify-content: center;
   min-width: 0;
   overflow-wrap: break-word;
   word-break: break-word;
@@ -195,18 +182,25 @@ defineExpose({ openCreateModal })
   word-break: break-word;
 }
 
+.benefits-resource-type {
+  margin: var(--space-1) 0 0;
+  color: var(--primary);
+  font-size: 13px;
+  font-weight: 600;
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
 .benefits-more-actions {
   display: flex;
   gap: var(--space-2);
   align-items: center;
-  flex-wrap: wrap;
   justify-content: flex-end;
   min-width: 0;
-  flex-shrink: 0;
 }
 
 .benefits-more-actions .pill-button {
-  white-space: normal;
+  white-space: nowrap;
   min-width: 0;
 }
 

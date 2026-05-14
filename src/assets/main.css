@@ -302,6 +302,21 @@ button:hover {
   text-align: left;
 }
 
+.text-truncate {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.input-hint {
+  margin: calc(var(--space-1) * -1) 0 var(--space-2);
+  font-size: 0.85rem;
+}
+
+.input-hint.error {
+  color: var(--error);
+}
+
 /* Form containers */
 .step,
 .address-form {

@@ -3,65 +3,74 @@ import { ref, computed } from 'vue'
 import { ENDPOINTS } from '@/config/api'
 import { useTokenStore } from './tokenStore'
 import { apiFetch } from '@/composables/apiClient'
+import { checkResponse } from '@/composables/checkResponse'
 
 export const useMembershipTypeStore = defineStore('membershipTypes', () => {
   // State
+  const allMembershipTypes = ref([])
   const membershipTypes = ref([])
   const loading = ref(false)
   const error = ref(null)
-  const count = ref(0)
-  const next = ref(null)
-  const previous = ref(null)
   const page = ref(1)
   const pageSize = ref(2)
 
   // Getters
+  const count = computed(() => allMembershipTypes.value.length)
   const totalPages = computed(() => Math.max(1, Math.ceil(count.value / pageSize.value)))
-  const hasNextPage = computed(() => !!next.value)
-  const hasPreviousPage = computed(() => !!previous.value)
 
   const tokenStore = useTokenStore()
 
-  const checkResponse = async (response, defaultMsg) => {
-    if (!response.ok) {
-      const data = await response.json().catch(() => ({}))
-      throw new Error(data.detail || defaultMsg)
-    }
+  // Helpers
+  function applyPagination() {
+    const start = (page.value - 1) * pageSize.value
+    membershipTypes.value = allMembershipTypes.value.slice(start, start + pageSize.value)
   }
 
-  // Setters
-  const setPage = async (newPage) => {
-    if (newPage < 1) return
-    await fetchMembershipTypes({ page: newPage })
+  function setPage(newPage) {
+    if (newPage < 1 || newPage > totalPages.value) return
+    page.value = newPage
+    applyPagination()
   }
 
-  const setPageSize = async (newPageSize) => {
+  function setPageSize(newPageSize) {
     pageSize.value = newPageSize
-    await fetchMembershipTypes({ page: 1 })
+    page.value = 1
+    applyPagination()
   }
 
   // Actions
-  const fetchMembershipTypes = async (params = {}) => {
+  async function fetchActiveMembershipTypes() {
     loading.value = true
     error.value = null
     try {
-      const currentPage = params.page ?? page.value
-      const currentPageSize = params.pageSize ?? pageSize.value
+      const response = await apiFetch(ENDPOINTS.membershipTypesActive, {}, tokenStore)
+      await checkResponse(response, 'Error al cargar membresías activas')
 
-      const query = new URLSearchParams()
-      query.set('page', currentPage)
-      query.set('page_size', currentPageSize)
+      const data = await response.json()
+      allMembershipTypes.value = Array.isArray(data) ? data : data.results || []
+      page.value = 1
+      applyPagination()
 
-      const response = await apiFetch(`${ENDPOINTS.membershipTypes}?${query.toString()}`, {}, tokenStore)
+      return data
+    } catch (err) {
+      error.value = err.message || 'Error al cargar membresías activas'
+      throw err
+    } finally {
+      loading.value = false
+    }
+  }
+
+  async function fetchMembershipTypes() {
+    loading.value = true
+    error.value = null
+    try {
+      const response = await apiFetch(ENDPOINTS.membershipTypes, {}, tokenStore)
       await checkResponse(response, 'Error al cargar membresías')
 
       const data = await response.json()
-      membershipTypes.value = data.results || []
-      count.value = data.count || 0
-      next.value = data.next
-      previous.value = data.previous
-      page.value = currentPage
-      pageSize.value = currentPageSize
+      allMembershipTypes.value = Array.isArray(data) ? data : data.results || []
+      page.value = 1
+      applyPagination()
 
       return data
     } catch (err) {
@@ -72,7 +81,7 @@ export const useMembershipTypeStore = defineStore('membershipTypes', () => {
     }
   }
 
-  const createMembershipType = async (payload) => {
+  async function createMembershipType(payload) {
     loading.value = true
     error.value = null
     try {
@@ -88,9 +97,8 @@ export const useMembershipTypeStore = defineStore('membershipTypes', () => {
 
       await checkResponse(response, 'Error al crear la membresía')
 
-      const created = await response.json()
       await fetchMembershipTypes()
-      return created
+      return membershipTypes.value
     } catch (err) {
       error.value = err.message || 'Error al crear la membresía'
       throw err
@@ -99,7 +107,7 @@ export const useMembershipTypeStore = defineStore('membershipTypes', () => {
     }
   }
 
-  const updateMembershipType = async (payload) => {
+  async function updateMembershipType(payload) {
     loading.value = true
     error.value = null
     try {
@@ -115,11 +123,8 @@ export const useMembershipTypeStore = defineStore('membershipTypes', () => {
 
       await checkResponse(response, 'Error al actualizar la membresía')
 
-      const updated = await response.json()
-      const index = membershipTypes.value.findIndex((m) => m.name === payload.name)
-      if (index !== -1) membershipTypes.value[index] = { ...membershipTypes.value[index], ...updated }
-
-      return updated
+      await fetchMembershipTypes()
+      return membershipTypes.value
     } catch (err) {
       error.value = err.message || 'Error al actualizar la membresía'
       throw err
@@ -128,7 +133,7 @@ export const useMembershipTypeStore = defineStore('membershipTypes', () => {
     }
   }
 
-  const deleteMembershipType = async (name) => {
+  async function deleteMembershipType(name) {
     loading.value = true
     error.value = null
     try {
@@ -154,29 +159,25 @@ export const useMembershipTypeStore = defineStore('membershipTypes', () => {
     }
   }
 
-  const clearMembershipTypes = () => {
+  function clearMembershipTypes() {
+    allMembershipTypes.value = []
     membershipTypes.value = []
     error.value = null
-    count.value = 0
-    next.value = null
-    previous.value = null
     page.value = 1
-    pageSize.value = 10
+    pageSize.value = 2
   }
 
   return {
+    allMembershipTypes,
     membershipTypes,
     loading,
     error,
     count,
-    next,
-    previous,
     page,
     pageSize,
     totalPages,
-    hasNextPage,
-    hasPreviousPage,
     fetchMembershipTypes,
+    fetchActiveMembershipTypes,
     createMembershipType,
     updateMembershipType,
     deleteMembershipType,

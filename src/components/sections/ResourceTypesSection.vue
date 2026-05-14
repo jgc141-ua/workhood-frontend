@@ -2,13 +2,19 @@
 import { ref } from 'vue'
 import DataTableList from '@/components/DataTableList.vue'
 import MoreActionsButton from '@/components/MoreActionsButton.vue'
-import IconEdit from '@/components/icons/IconEdit.vue'
-import IconTrash from '@/components/icons/IconTrash.vue'
+import IconEdit from '@/assets/icons/IconEdit.vue'
+import IconTrash from '@/assets/icons/IconTrash.vue'
 import AppModal from '@/components/AppModal.vue'
 import ConfirmModal from '@/components/ConfirmModal.vue'
 import ResourceTypeForm from '@/components/forms/ResourceTypeForm.vue'
 import { useResourceTypeStore } from '@/stores/resourceTypeStore'
 import { showToast } from '@/composables/toast'
+
+const props = defineProps({
+  isCreateOpen: { type: Boolean, default: false },
+})
+
+const emit = defineEmits(['update:isCreateOpen'])
 
 const resourceTypeStore = useResourceTypeStore()
 
@@ -17,19 +23,14 @@ const moreActionsOpts = [
   { icon: IconTrash, label: 'Eliminar', action: 'delete', danger: true },
 ]
 
-// Modales
-const isAddModalOpen = ref(false)
+// Estado de los modales y elementos seleccionados
 const isEditModalOpen = ref(false)
 const isDeleteModalOpen = ref(false)
 const selectedResourceType = ref(null)
 const resourceTypeToDelete = ref(null)
 
-function openCreateModal() {
-  isAddModalOpen.value = true
-}
-
 function closeCreateModal() {
-  isAddModalOpen.value = false
+  emit('update:isCreateOpen', false)
 }
 
 function openEditModal(resourceType) {
@@ -66,12 +67,7 @@ function handleAction(resourceType, option) {
   }
 }
 
-function truncateDescription(text, maxLength = 35) {
-  if (!text) return ''
-  if (text.length <= maxLength) return text
-  return text.slice(0, maxLength).trim() + '...'
-}
-
+// Crea un nuevo tipo de recurso
 async function handleCreate(formData) {
   try {
     await resourceTypeStore.createResourceType(formData)
@@ -82,6 +78,7 @@ async function handleCreate(formData) {
   }
 }
 
+// Actualiza el tipo de recurso seleccionado
 async function handleUpdate(formData) {
   try {
     await resourceTypeStore.updateResourceType(formData)
@@ -92,25 +89,26 @@ async function handleUpdate(formData) {
   }
 }
 
+// Elimina el tipo de recurso seleccionado
 async function handleDelete() {
   if (!resourceTypeToDelete.value) return
   try {
     await resourceTypeStore.deleteResourceType(resourceTypeToDelete.value.name)
-    showToast('Tipo de recurso eliminado correctamente')
-    closeDeleteModal()
+    showToast('Tipo de recurso eliminado correctamente', 'success')
   } catch (err) {
     showToast(err.message || 'Error al eliminar el tipo de recurso')
+    resourceTypeStore.error = null
   }
-}
 
-defineExpose({ openCreateModal })
+  closeDeleteModal()
+}
 </script>
 
 <template>
   <aside>
     <h2 class="section-title">Tipos de recursos</h2>
 
-    <AppModal :show="isAddModalOpen" title="Añadir tipo de recurso" @close="closeCreateModal">
+    <AppModal :show="props.isCreateOpen" title="Añadir tipo de recurso" @close="closeCreateModal">
       <ResourceTypeForm :is-edit="false" @submit="handleCreate" @cancel="closeCreateModal" />
     </AppModal>
 
@@ -122,7 +120,7 @@ defineExpose({ openCreateModal })
 
     <ConfirmModal :show="isDeleteModalOpen" title="Eliminar tipo de recurso"
       message="¿Estás seguro de que deseas eliminar el tipo de recurso" :item-name="resourceTypeToDelete?.name"
-      confirm-label="Eliminar" @confirm="handleDelete" @cancel="closeDeleteModal" @closed="onDeleteModalClosed" />
+      confirm-label="Eliminar" @confirm="handleDelete" @close="closeDeleteModal" @after-close="onDeleteModalClosed" />
 
     <DataTableList class="resource-types-table"
       :columns="[{ key: 'resourceType', label: 'TIPO DE RECURSO', width: '1fr' }]"
@@ -133,8 +131,8 @@ defineExpose({ openCreateModal })
       @next-page="resourceTypeStore.setPage(resourceTypeStore.page + 1)">
       <template #row="{ item }">
         <div class="resource-types-text">
-          <h4 class="resource-types-name">{{ item.name }}</h4>
-          <p class="resource-types-description">{{ truncateDescription(item.description) }}</p>
+          <h4 class="resource-types-name text-truncate" :title="item.name">{{ item.name }}</h4>
+          <p class="resource-types-description text-truncate" :title="item.description">{{ item.description }}</p>
         </div>
         <MoreActionsButton :options="moreActionsOpts" @select="(opt) => handleAction(item, opt)" />
       </template>
@@ -146,20 +144,6 @@ defineExpose({ openCreateModal })
 .resource-types-table :deep(.data-table-list) {
   display: flex;
   flex-direction: column;
-  border-bottom: 0;
-}
-
-.resource-types-table :deep(.data-table-list-item) {
-  border-top: 0;
-  border-bottom: 1px solid var(--outline-variant);
-  min-width: 0;
-  width: 100%;
-  box-sizing: border-box;
-  padding: var(--space-4);
-  flex-wrap: wrap;
-}
-
-.resource-types-table :deep(.data-table-list-item:last-child) {
   border-bottom: 0;
 }
 

@@ -1,5 +1,6 @@
 import { watch } from 'vue'
 
+// Crea un objeto de formulario de usuario con valores por defecto
 export function createEmptyForm(overrides = {}) {
   return {
     email: overrides.email ?? '',
@@ -27,20 +28,19 @@ export function createEmptyForm(overrides = {}) {
     },
     user_legal: {
       terms: overrides.user_legal?.terms ?? false,
-      terms_date: overrides.user_legal?.terms_date ?? null,
       privacy: overrides.user_legal?.privacy ?? false,
-      privacy_date: overrides.user_legal?.privacy_date ?? null,
       marketing: overrides.user_legal?.marketing ?? false,
-      marketing_date: overrides.user_legal?.marketing_date ?? null,
     },
   }
 }
 
+// Crea el objeto vacío para el prefijo y número de teléfono
 export function createEmptyPhoneData() {
   return { phoneCode: '', phone: '' }
 }
 
 /* Parsea un numero completo (+34 600000000) en { phoneCode, phone } */
+// Separa el prefijo internacional del resto del número
 export function parseUserPhone(phone) {
   if (!phone) return { phoneCode: '+34', phone: '' }
   if (phone.startsWith('+')) {
@@ -54,6 +54,7 @@ export function parseUserPhone(phone) {
 }
 
 /* Sincroniza billing_address con address cuando el checkbox esta activo */
+// Mantiene la dirección de facturación igual a la dirección personal cuando está activo
 export function useBillingSync(form) {
   watch(
     () => form.value.billing_same_as_address,
@@ -72,29 +73,5 @@ export function useBillingSync(form) {
       }
     },
     { deep: true },
-  )
-}
-
-/* Actualiza las fechas ISO de consentimiento legal al marcar/desmarcar */
-export function useLegalDates(form) {
-  watch(
-    () => form.value.user_legal.terms,
-    (val) => {
-      form.value.user_legal.terms_date = val ? new Date().toISOString() : null
-    },
-  )
-
-  watch(
-    () => form.value.user_legal.privacy,
-    (val) => {
-      form.value.user_legal.privacy_date = val ? new Date().toISOString() : null
-    },
-  )
-
-  watch(
-    () => form.value.user_legal.marketing,
-    (val) => {
-      form.value.user_legal.marketing_date = val ? new Date().toISOString() : null
-    },
   )
 }

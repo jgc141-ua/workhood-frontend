@@ -4,35 +4,46 @@ import { IonPage, IonContent } from '@ionic/vue'
 import { useMembersStore } from '@/stores/memberStore'
 
 import MobileHeader from '@/components/MobileHeader.vue'
-import IconEdit from '@/components/icons/IconEdit.vue'
-import IconSearch from '@/components/icons/IconSearch.vue'
+import IconEdit from '@/assets/icons/IconEdit.vue'
+import IconSearch from '@/assets/icons/IconSearch.vue'
+import IconMembers from '@/assets/icons/IconMembers.vue'
 import AppModal from '@/components/AppModal.vue'
 import ConfirmModal from '@/components/ConfirmModal.vue'
 import RegisterForm from '@/components/forms/RegisterForm.vue'
 import EditMemberForm from '@/components/forms/EditMemberForm.vue'
+import SubscribeMembershipModal from '@/components/SubscribeMembershipModal.vue'
 import DataTableColumns from '@/components/DataTableColumns.vue'
 import { useAuthStore } from '@/stores/authStore'
+import { useMembershipStore } from '@/stores/membershipStore'
 import { showToast } from '@/composables/toast'
 import MoreActionsButton from '@/components/MoreActionsButton.vue'
-import IconTrash from '@/components/icons/IconTrash.vue'
+import IconTrash from '@/assets/icons/IconTrash.vue'
+import MemberMembershipModal from '@/components/MemberMembershipModal.vue'
 
 const brand = inject('BRAND')
 
 // Stores
 const auth = useAuthStore()
 const membersStore = useMembersStore()
+const membershipStore = useMembershipStore()
 
-// Modal añadir
+// Modal añadir miembro
 const isAddMemberModalOpen = ref(false)
-const openAddMemberModal = () => { isAddMemberModalOpen.value = true }
-const closeAddMemberModal = () => { isAddMemberModalOpen.value = false }
 
-// Modal editar
+function openAddMemberModal() {
+  isAddMemberModalOpen.value = true
+}
+
+function closeAddMemberModal() {
+  isAddMemberModalOpen.value = false
+}
+
+// Modal editar miembro
 const isEditMemberModalOpen = ref(false)
 const selectedMember = ref(null)
 const isLoadingMemberDetail = ref(false)
 
-const openEditMemberModal = async (member) => {
+async function openEditMemberModal(member) {
   isLoadingMemberDetail.value = true
   try {
     const detail = await membersStore.fetchMemberDetail(member.email)
@@ -45,29 +56,110 @@ const openEditMemberModal = async (member) => {
   }
 }
 
-const closeEditMemberModal = () => {
+function closeEditMemberModal() {
   isEditMemberModalOpen.value = false
 }
 
-const onEditMemberModalClosed = () => {
+function onEditMemberModalClosed() {
   selectedMember.value = null
 }
 
-// Modal eliminar
+// Modal eliminar miembro
 const isDeleteMemberModalOpen = ref(false)
 const memberToDelete = ref(null)
 
-const openDeleteMemberModal = (member) => {
+function openDeleteMemberModal(member) {
   memberToDelete.value = member
   isDeleteMemberModalOpen.value = true
 }
 
-const closeDeleteMemberModal = () => {
+function closeDeleteMemberModal() {
   isDeleteMemberModalOpen.value = false
 }
 
-const onDeleteMemberModalClosed = () => {
+function onDeleteMemberModalClosed() {
   memberToDelete.value = null
+}
+
+// Modal suscribir miembro
+const isSubscribeMemberModalOpen = ref(false)
+const memberToSubscribe = ref(null)
+
+function openSubscribeMemberModal(member) {
+  memberToSubscribe.value = member
+  isSubscribeMemberModalOpen.value = true
+}
+
+function closeSubscribeMemberModal() {
+  isSubscribeMemberModalOpen.value = false
+}
+
+function onSubscribeMemberModalClosed() {
+  memberToSubscribe.value = null
+}
+
+async function handleSubscribedMember() {
+  showToast('Miembro suscrito correctamente', 'success')
+  await membersStore.fetchMembers()
+}
+
+// Modal ver suscripción
+const isViewMembershipModalOpen = ref(false)
+const memberForMembership = ref(null)
+const selectedMembership = ref(null)
+const isLoadingMembership = ref(false)
+
+async function openViewMembershipModal(member) {
+  memberForMembership.value = member
+  selectedMembership.value = null
+  isViewMembershipModalOpen.value = true
+  isLoadingMembership.value = true
+
+  try {
+    selectedMembership.value = await membershipStore.fetchMemberMembership(member.email)
+  } catch {
+    selectedMembership.value = null
+  } finally {
+    isLoadingMembership.value = false
+  }
+}
+
+function closeViewMembershipModal() {
+  isViewMembershipModalOpen.value = false
+}
+
+function onViewMembershipModalClosed() {
+  memberForMembership.value = null
+  selectedMembership.value = null
+}
+
+// Modal cancelar suscripción
+const isCancelMembershipModalOpen = ref(false)
+const memberToCancel = ref(null)
+
+function openCancelMembershipModal(member) {
+  memberToCancel.value = member
+  isCancelMembershipModalOpen.value = true
+}
+
+function closeCancelMembershipModal() {
+  isCancelMembershipModalOpen.value = false
+}
+
+function onCancelMembershipModalClosed() {
+  memberToCancel.value = null
+}
+
+async function handleCancelMembership() {
+  if (!memberToCancel.value) return
+  try {
+    await membershipStore.cancelMemberMembership(memberToCancel.value.email)
+    showToast('Suscripción cancelada de forma inmediata', 'success')
+    closeCancelMembershipModal()
+    await membersStore.fetchMembers()
+  } catch (err) {
+    showToast(err.message || 'Error al cancelar la suscripción')
+  }
 }
 
 async function handleDeleteMember() {
@@ -75,10 +167,11 @@ async function handleDeleteMember() {
   try {
     await membersStore.deleteMember(memberToDelete.value.email)
     showToast('Miembro eliminado correctamente', 'success')
-    closeDeleteMemberModal()
   } catch (err) {
     showToast(err.message || 'Error al eliminar el miembro')
   }
+
+  closeDeleteMemberModal()
 }
 
 // Búsqueda con debounce
@@ -101,18 +194,24 @@ const tabs = computed(() => [
 ])
 
 // Paginación
-const nextPage = () => membersStore.setPage(membersStore.page + 1)
-const prevPage = () => membersStore.setPage(membersStore.page - 1)
+function nextPage() {
+  membersStore.setPage(membersStore.page + 1)
+}
+
+function prevPage() {
+  membersStore.setPage(membersStore.page - 1)
+}
 
 const memberColumns = [
   { key: 'member', label: 'MIEMBRO', width: '1fr' },
   { key: 'contact', label: 'CONTACTO', width: '1fr' },
   { key: 'nif', label: 'NIF/CIF', width: '1fr' },
+  { key: 'subscription', label: 'SUSCRIPCIÓN', width: '1fr' },
   { key: 'actions', label: '', width: '0.25fr' },
 ]
 
 // Helpers
-const getInitials = (member) => {
+function getInitials(member) {
   const first = member.first_name?.[0] || ''
   const last = member.last_name?.[0] || ''
   return `${first}${last}`.toUpperCase()
@@ -149,7 +248,27 @@ function handleMemberAction(member, option) {
     openDeleteMemberModal(member)
   } else if (option.action === 'edit') {
     openEditMemberModal(member)
+  } else if (option.action === 'subscribe') {
+    openSubscribeMemberModal(member)
+  } else if (option.action === 'cancel-membership') {
+    openCancelMembershipModal(member)
   }
+}
+
+function memberActionOptions(member) {
+  const options = [{ icon: IconEdit, label: 'Editar', action: 'edit', danger: false }]
+
+  if (member.active_membership) {
+    options.push({ icon: IconTrash, label: 'Cancelar suscripción (inmediato)', action: 'cancel-membership', danger: true })
+  } else {
+    options.push({ icon: IconMembers, label: 'Suscribir', action: 'subscribe', danger: false })
+  }
+
+  options.push(
+    { icon: IconTrash, label: 'Eliminar', action: 'delete', danger: true },
+  )
+
+  return options
 }
 
 // Carga inicial
@@ -170,6 +289,7 @@ onMounted(async () => {
 
     <ion-content :fullscreen="true" class="ion-padding">
       <section class="members">
+        <!-- Encabezado y acción principal -->
         <header class="row-between">
           <div class="page-header">
             <p class="eyebrow">RED DE {{ brand?.toUpperCase() }}</p>
@@ -181,21 +301,42 @@ onMounted(async () => {
           </button>
         </header>
 
+        <!-- Modal: añadir miembro -->
         <AppModal :show="isAddMemberModalOpen" title="Añadir miembro" @close="closeAddMemberModal">
           <RegisterForm @submit="handleRegister" />
         </AppModal>
 
+        <!-- Modal: editar miembro -->
         <AppModal :show="isEditMemberModalOpen" title="Editar miembro" @close="closeEditMemberModal"
           @after-close="onEditMemberModalClosed">
           <EditMemberForm v-if="selectedMember" :member-data="selectedMember" @submit="handleUpdateMember"
             @cancel="closeEditMemberModal" />
         </AppModal>
 
+        <!-- Modal: confirmar eliminación -->
         <ConfirmModal :show="isDeleteMemberModalOpen" title="Eliminar miembro"
           message="¿Estás seguro de que deseas eliminar al miembro" :item-name="memberToDelete?.email"
-          confirm-label="Eliminar" @confirm="handleDeleteMember" @cancel="closeDeleteMemberModal"
-          @closed="onDeleteMemberModalClosed" />
+          confirm-label="Eliminar" @confirm="handleDeleteMember" @close="closeDeleteMemberModal"
+          @after-close="onDeleteMemberModalClosed" />
 
+        <!-- Modal: suscribir miembro -->
+        <SubscribeMembershipModal :show="isSubscribeMemberModalOpen" :member-email="memberToSubscribe?.email"
+          @close="closeSubscribeMemberModal" @subscribed="handleSubscribedMember"
+          @after-close="onSubscribeMemberModalClosed" />
+
+        <!-- Modal: ver suscripción -->
+        <MemberMembershipModal :show="isViewMembershipModalOpen" :member="memberForMembership"
+          :membership="selectedMembership" :loading="isLoadingMembership" @close="closeViewMembershipModal"
+          @after-close="onViewMembershipModalClosed" />
+
+        <!-- Modal: cancelar suscripción -->
+        <ConfirmModal :show="isCancelMembershipModalOpen" title="Cancelar suscripción"
+          message="¿Estás seguro de que deseas cancelar de forma inmediata la suscripción de"
+          :item-name="memberToCancel?.email" confirm-label="Cancelar ahora" confirm-danger
+          @confirm="handleCancelMembership" @close="closeCancelMembershipModal"
+          @after-close="onCancelMembershipModalClosed" />
+
+        <!-- Barra de filtros y búsqueda -->
         <section class="members-bar">
           <div class="members-tabs" role="tablist" aria-label="Filtros de miembros">
             <button v-for="tab in tabs" :key="tab.name" type="button" class="members-tab"
@@ -212,6 +353,7 @@ onMounted(async () => {
           </div>
         </section>
 
+        <!-- Tabla de miembros -->
         <DataTableColumns :columns="memberColumns" :items="membersStore.members" key-field="id"
           :loading="membersStore.loading" :error="membersStore.error"
           :pagination="{ page: membersStore.page, pageSize: membersStore.pageSize, total: membersStore.count }"
@@ -239,12 +381,18 @@ onMounted(async () => {
             <div class="data-table-text">{{ item.nif_cif || '-' }}</div>
           </template>
 
+          <template #cell-subscription="{ item }">
+            <button type="button" class="subscription-badge"
+              :class="item.active_membership ? 'subscription-badge--active' : 'subscription-badge--inactive'"
+              @click="openViewMembershipModal(item)">
+              {{ item.active_membership ? item.active_membership.membership_type_name : 'Sin suscripción' }}
+            </button>
+          </template>
+
           <template #cell-actions="{ item }">
             <div class="members-actions">
-              <MoreActionsButton :options="[
-                { icon: IconEdit, label: 'Editar', action: 'edit', danger: false },
-                { icon: IconTrash, label: 'Eliminar', action: 'delete', danger: true }
-              ]" @select="(opt) => handleMemberAction(item, opt)" />
+              <MoreActionsButton :options="memberActionOptions(item)"
+                @select="(opt) => handleMemberAction(item, opt)" />
             </div>
           </template>
         </DataTableColumns>
@@ -254,6 +402,7 @@ onMounted(async () => {
 </template>
 
 <style scoped>
+/* Layout principal */
 .members {
   min-height: 100%;
   display: flex;
@@ -261,6 +410,7 @@ onMounted(async () => {
   gap: var(--space-6);
 }
 
+/* Barra de filtros y búsqueda */
 .members-bar {
   display: flex;
   justify-content: space-between;
@@ -337,6 +487,7 @@ onMounted(async () => {
   color: #6b7280;
 }
 
+/* Avatar y datos del miembro */
 .members-user {
   gap: var(--space-3);
 }
@@ -373,6 +524,34 @@ onMounted(async () => {
   gap: var(--space-2);
 }
 
+/* Estado de suscripción */
+.subscription-badge {
+  border: 0;
+  background: transparent;
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 0.35rem 0.75rem;
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.subscription-badge--active {
+  background: var(--success-text);
+  color: white;
+}
+
+.subscription-badge--inactive {
+  background: var(--surface-container-high);
+  color: #6b7280;
+}
+
+.subscription-badge:hover {
+  opacity: 0.85;
+}
+
+/* Responsive */
 @media (max-width: 1024px) {
 
   .row-between,

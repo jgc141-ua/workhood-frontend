@@ -3,65 +3,53 @@ import { ref, computed } from 'vue'
 import { ENDPOINTS } from '@/config/api'
 import { useTokenStore } from './tokenStore'
 import { apiFetch } from '@/composables/apiClient'
+import { checkResponse } from '@/composables/checkResponse'
 
 export const useResourceTypeStore = defineStore('resourceTypes', () => {
   // State
+  const allResourceTypes = ref([])
   const resourceTypes = ref([])
   const loading = ref(false)
   const error = ref(null)
-  const count = ref(0)
-  const next = ref(null)
-  const previous = ref(null)
   const page = ref(1)
   const pageSize = ref(3)
 
   // Getters
+  const count = computed(() => allResourceTypes.value.length)
   const totalPages = computed(() => Math.max(1, Math.ceil(count.value / pageSize.value)))
-  const hasNextPage = computed(() => !!next.value)
-  const hasPreviousPage = computed(() => !!previous.value)
 
   const tokenStore = useTokenStore()
 
-  const checkResponse = async (response, defaultMsg) => {
-    if (!response.ok) {
-      const data = await response.json().catch(() => ({}))
-      throw new Error(data.detail || defaultMsg)
-    }
+  // Helpers
+  function applyPagination() {
+    const start = (page.value - 1) * pageSize.value
+    resourceTypes.value = allResourceTypes.value.slice(start, start + pageSize.value)
   }
 
-  // Setters
-  const setPage = async (newPage) => {
-    if (newPage < 1) return
-    await fetchResourceTypes({ page: newPage })
+  function setPage(newPage) {
+    if (newPage < 1 || newPage > totalPages.value) return
+    page.value = newPage
+    applyPagination()
   }
 
-  const setPageSize = async (newPageSize) => {
+  function setPageSize(newPageSize) {
     pageSize.value = newPageSize
-    await fetchResourceTypes({ page: 1 })
+    page.value = 1
+    applyPagination()
   }
 
   // Actions
-  const fetchResourceTypes = async (params = {}) => {
+  async function fetchResourceTypes() {
     loading.value = true
     error.value = null
     try {
-      const currentPage = params.page ?? page.value
-      const currentPageSize = params.pageSize ?? pageSize.value
-
-      const query = new URLSearchParams()
-      query.set('page', currentPage)
-      query.set('page_size', currentPageSize)
-
-      const response = await apiFetch(`${ENDPOINTS.resourceTypes}?${query.toString()}`, {}, tokenStore)
+      const response = await apiFetch(ENDPOINTS.resourceTypes, {}, tokenStore)
       await checkResponse(response, 'Error al cargar tipos de recurso')
 
       const data = await response.json()
-      resourceTypes.value = data.results || []
-      count.value = data.count || 0
-      next.value = data.next
-      previous.value = data.previous
-      page.value = currentPage
-      pageSize.value = currentPageSize
+      allResourceTypes.value = Array.isArray(data) ? data : data.results || []
+      page.value = 1
+      applyPagination()
 
       return data
     } catch (err) {
@@ -72,7 +60,7 @@ export const useResourceTypeStore = defineStore('resourceTypes', () => {
     }
   }
 
-  const createResourceType = async (payload) => {
+  async function createResourceType(payload) {
     loading.value = true
     error.value = null
     try {
@@ -88,9 +76,8 @@ export const useResourceTypeStore = defineStore('resourceTypes', () => {
 
       await checkResponse(response, 'Error al crear el tipo de recurso')
 
-      const created = await response.json()
       await fetchResourceTypes()
-      return created
+      return resourceTypes.value
     } catch (err) {
       error.value = err.message || 'Error al crear el tipo de recurso'
       throw err
@@ -99,7 +86,7 @@ export const useResourceTypeStore = defineStore('resourceTypes', () => {
     }
   }
 
-  const updateResourceType = async (payload) => {
+  async function updateResourceType(payload) {
     loading.value = true
     error.value = null
     try {
@@ -115,11 +102,8 @@ export const useResourceTypeStore = defineStore('resourceTypes', () => {
 
       await checkResponse(response, 'Error al actualizar el tipo de recurso')
 
-      const updated = await response.json()
-      const index = resourceTypes.value.findIndex((rt) => rt.name === payload.name)
-      if (index !== -1) resourceTypes.value[index] = { ...resourceTypes.value[index], ...updated }
-
-      return updated
+      await fetchResourceTypes()
+      return resourceTypes.value
     } catch (err) {
       error.value = err.message || 'Error al actualizar el tipo de recurso'
       throw err
@@ -128,7 +112,7 @@ export const useResourceTypeStore = defineStore('resourceTypes', () => {
     }
   }
 
-  const deleteResourceType = async (name) => {
+  async function deleteResourceType(name) {
     loading.value = true
     error.value = null
     try {
@@ -154,28 +138,23 @@ export const useResourceTypeStore = defineStore('resourceTypes', () => {
     }
   }
 
-  const clearResourceTypes = () => {
+  function clearResourceTypes() {
+    allResourceTypes.value = []
     resourceTypes.value = []
     error.value = null
-    count.value = 0
-    next.value = null
-    previous.value = null
     page.value = 1
     pageSize.value = 3
   }
 
   return {
+    allResourceTypes,
     resourceTypes,
     loading,
     error,
     count,
-    next,
-    previous,
     page,
     pageSize,
     totalPages,
-    hasNextPage,
-    hasPreviousPage,
     fetchResourceTypes,
     createResourceType,
     updateResourceType,

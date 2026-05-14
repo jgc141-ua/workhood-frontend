@@ -37,11 +37,8 @@ const form = ref({
     billing_address: { street: '', city: '', state: '', postal_code: '', country: '' },
     user_legal: {
         terms: false,
-        terms_date: null,
         privacy: false,
-        privacy_date: null,
         marketing: false,
-        marketing_date: null,
     },
 })
 
@@ -57,6 +54,7 @@ const isStepValid = computed(() => {
     return false
 })
 
+// Avanza al siguiente paso validando el actual
 async function next() {
     if (step.value === 1) personalFormRef.value?.verifyValidity()
     if (step.value === 3) {
@@ -73,6 +71,7 @@ async function next() {
     }
 }
 
+// Retrocede al paso anterior
 async function prev() {
     if (step.value > 1) step.value--
     if (step.value === 3) {
@@ -84,6 +83,7 @@ async function prev() {
     }
 }
 
+// Envía el formulario de registro completo
 function handleSubmit() {
     if (form.value.billing_same_as_address) {
         form.value.billing_address = form.value.address
@@ -102,26 +102,6 @@ watch(
     },
 )
 
-watch(
-    () => form.value.user_legal.terms,
-    (timestamp) => {
-        form.value.user_legal.terms_date = timestamp ? new Date().toISOString() : null
-    },
-)
-
-watch(
-    () => form.value.user_legal.privacy,
-    (timestamp) => {
-        form.value.user_legal.privacy_date = timestamp ? new Date().toISOString() : null
-    },
-)
-
-watch(
-    () => form.value.user_legal.marketing,
-    (timestamp) => {
-        form.value.user_legal.marketing_date = timestamp ? new Date().toISOString() : null
-    },
-)
 </script>
 
 <template>

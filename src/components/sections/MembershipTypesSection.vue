@@ -2,13 +2,19 @@
 import { ref } from 'vue'
 import DataTableList from '@/components/DataTableList.vue'
 import MoreActionsButton from '@/components/MoreActionsButton.vue'
-import IconEdit from '@/components/icons/IconEdit.vue'
-import IconTrash from '@/components/icons/IconTrash.vue'
+import IconEdit from '@/assets/icons/IconEdit.vue'
+import IconTrash from '@/assets/icons/IconTrash.vue'
 import AppModal from '@/components/AppModal.vue'
 import ConfirmModal from '@/components/ConfirmModal.vue'
 import MembershipTypeForm from '@/components/forms/MembershipTypeForm.vue'
 import { useMembershipTypeStore } from '@/stores/membershipTypeStore'
 import { showToast } from '@/composables/toast'
+
+const props = defineProps({
+  isCreateOpen: { type: Boolean, default: false },
+})
+
+const emit = defineEmits(['update:isCreateOpen'])
 
 const membershipTypeStore = useMembershipTypeStore()
 
@@ -17,19 +23,14 @@ const moreActionsOpts = [
   { icon: IconTrash, label: 'Eliminar', action: 'delete', danger: true },
 ]
 
-// Modales
-const isAddModalOpen = ref(false)
+// Estado de los modales y elementos seleccionados
 const isEditModalOpen = ref(false)
 const isDeleteModalOpen = ref(false)
 const selectedType = ref(null)
 const typeToDelete = ref(null)
 
-function openCreateModal() {
-  isAddModalOpen.value = true
-}
-
 function closeCreateModal() {
-  isAddModalOpen.value = false
+  emit('update:isCreateOpen', false)
 }
 
 function openEditModal(type) {
@@ -66,6 +67,7 @@ function handleAction(type, option) {
   }
 }
 
+// Crea un nuevo tipo de membresía
 async function handleCreate(formData) {
   try {
     await membershipTypeStore.createMembershipType(formData)
@@ -76,6 +78,7 @@ async function handleCreate(formData) {
   }
 }
 
+// Actualiza el tipo de membresía seleccionado
 async function handleUpdate(formData) {
   try {
     await membershipTypeStore.updateMembershipType(formData)
@@ -86,25 +89,26 @@ async function handleUpdate(formData) {
   }
 }
 
+// Elimina el tipo de membresía seleccionado
 async function handleDelete() {
   if (!typeToDelete.value) return
   try {
     await membershipTypeStore.deleteMembershipType(typeToDelete.value.name)
     showToast('Membresía eliminada correctamente')
-    closeDeleteModal()
   } catch (err) {
     showToast(err.message || 'Error al eliminar la membresía')
+    membershipTypeStore.error = null
   }
-}
 
-defineExpose({ openCreateModal })
+  closeDeleteModal()
+}
 </script>
 
 <template>
   <div>
     <h2 class="section-title">Membresías</h2>
 
-    <AppModal :show="isAddModalOpen" title="Añadir membresía" @close="closeCreateModal">
+    <AppModal :show="props.isCreateOpen" title="Añadir membresía" @close="closeCreateModal">
       <MembershipTypeForm :is-edit="false" @submit="handleCreate" @cancel="closeCreateModal" />
     </AppModal>
 
@@ -114,8 +118,8 @@ defineExpose({ openCreateModal })
     </AppModal>
 
     <ConfirmModal :show="isDeleteModalOpen" title="Eliminar membresía"
-      message="¿Estás seguro de que deseas eliminar la membresía" :item-name="typeToDelete?.name" confirm-label="Eliminar"
-      @confirm="handleDelete" @cancel="closeDeleteModal" @closed="onDeleteModalClosed" />
+      message="¿Estás seguro de que deseas eliminar la membresía" :item-name="typeToDelete?.name"
+      confirm-label="Eliminar" @confirm="handleDelete" @close="closeDeleteModal" @after-close="onDeleteModalClosed" />
 
     <DataTableList class="membership-table" :columns="[{ key: 'plan', label: 'MEMBRESÍAS', width: '1fr' }]"
       :items="membershipTypeStore.membershipTypes" key-field="id" :loading="membershipTypeStore.loading"
@@ -138,12 +142,19 @@ defineExpose({ openCreateModal })
             <p>{{ item.description || 'Sin descripción' }}</p>
           </div>
 
+          <div v-if="item.benefit_details?.length" class="membership-benefits">
+            <span v-for="benefit in item.benefit_details" :key="benefit.id" class="pill-button">
+              {{ benefit.name }}
+              <template v-if="benefit.quantity != null">({{ benefit.quantity }}h)</template>
+            </span>
+          </div>
+
           <div class="membership-card-footer">
             <div class="price">
               <span class="price-amount">{{ item.monthly_price }} €</span>
               <span class="price-unit">/mes</span>
             </div>
-            <span class="membership-meta">{{ item.is_fixed ? 'Escritorio fijo' : 'Escritorio flexible' }}</span>
+            <span class="membership-meta">{{ item.is_fixed ? 'Recurso fijo' : 'Recurso flexible' }}</span>
           </div>
         </article>
       </template>
@@ -216,6 +227,20 @@ defineExpose({ openCreateModal })
   color: #6b7280;
   overflow-wrap: break-word;
   word-break: break-word;
+}
+
+.membership-benefits {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+  min-width: 0;
+}
+
+.membership-benefits .pill-button {
+  white-space: normal;
+  min-width: 0;
+  font-size: 0.8rem;
 }
 
 .membership-card-footer {

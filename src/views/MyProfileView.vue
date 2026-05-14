@@ -10,19 +10,16 @@ import PasswordForm from '@/components/forms/PasswordForm.vue'
 import PrettyCheckbox from '@/components/PrettyCheckbox.vue'
 import MobileHeader from '@/components/MobileHeader.vue'
 import IconDropdown from '@/assets/icons/IconDropdown.vue'
-import { useTokenStore } from '@/stores/tokenStore'
 import {
     createEmptyForm,
     createEmptyPhoneData,
     parseUserPhone,
     useBillingSync,
-    useLegalDates,
 } from '@/composables/userForm'
 
 // Stores
 const meStore = useMeStore()
 const countryPhoneStore = useCountryPhoneStore()
-const tokenStore = useTokenStore()
 
 // Estados
 const personalRef = ref(null)
@@ -46,9 +43,8 @@ const originalSnapshot = ref('')
 const form = ref(createEmptyForm())
 const phoneData = ref(createEmptyPhoneData())
 
-// Formatos de fechas y direcciones
+// Sincronizar dirección de facturación
 useBillingSync(form)
-useLegalDates(form)
 
 // Helpers
 function buildPayload() {
@@ -184,11 +180,13 @@ async function handleSave() {
 
         <ion-content :fullscreen="true" class="ion-padding">
             <div class="profile">
+                <!-- Cabecera de la página -->
                 <header class="page-header">
                     <p class="eyebrow">TU CUENTA</p>
                     <h1 class="title">Mi perfil</h1>
                 </header>
 
+                <!-- Formulario del perfil cargado -->
                 <div v-if="isDataReady">
                     <div class="profile-grid">
                         <!-- Datos personales -->
@@ -276,6 +274,7 @@ async function handleSave() {
                         </section>
                     </div>
 
+                    <!-- Botón de guardado -->
                     <div class="profile-actions">
                         <ion-button class="btn-primary" style="margin-top: var(--space-6);" expand="block"
                             :disabled="!isFormValid || !hasChanges || isSaving" @click="handleSave">
@@ -284,6 +283,7 @@ async function handleSave() {
                     </div>
                 </div>
 
+                <!-- Estados de carga y error -->
                 <div class="server-state" v-else-if="!notData">
                     Cargando mi perfil...
                 </div>
@@ -297,105 +297,112 @@ async function handleSave() {
 </template>
 
 <style scoped>
+/* Layout del perfil */
 .profile {
-    min-height: 100%;
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-6);
-    padding-bottom: var(--space-8);
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  padding-bottom: var(--space-8);
 }
 
+/* Grid de secciones */
 .profile-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: var(--space-6);
-    align-items: start;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-6);
+  align-items: start;
 }
 
+/* Tarjeta de sección plegable */
 .profile-section {
-    overflow-x: hidden;
-    max-width: 100%;
-    padding: var(--space-4) var(--space-6);
+  overflow-x: hidden;
+  max-width: 100%;
+  padding: var(--space-4) var(--space-6);
 }
 
 .profile-section * {
-    max-width: 100%;
-    box-sizing: border-box;
+  max-width: 100%;
+  box-sizing: border-box;
 
 }
 
 .section-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: var(--space-3);
-    width: 100%;
-    padding: var(--space-2) 0;
-    background: none;
-    border: none;
-    cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  padding: var(--space-2) 0;
+  background: none;
+  border: none;
+  cursor: pointer;
 }
 
 .section-header .section-title {
-    margin: 0;
-    font-size: 1.05rem;
+  margin: 0;
+  font-size: 1.05rem;
 }
 
 .section-body {
-    display: grid;
-    grid-template-rows: 0fr;
-    transition: grid-template-rows 0.3s ease;
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.3s ease;
 }
 
 .section-body.is-open {
-    grid-template-rows: 1fr;
+  grid-template-rows: 1fr;
 }
 
 .section-body-inner {
-    overflow: hidden;
+  overflow: hidden;
 }
 
+/* Ajuste de formularios anidados */
 .profile-section :deep(.step) {
-    max-width: none;
-    margin: 0;
+  max-width: none;
+  margin: 0;
 }
 
 .profile-section :deep(.address-form) {
-    max-width: none;
-    margin: 0;
+  max-width: none;
+  margin: 0;
 }
 
 .profile-hint {
-    margin: var(--space-2) 0 0;
-    color: #6b7280;
-    font-size: 0.8rem;
+  margin: var(--space-2) 0 0;
+  color: #6b7280;
+  font-size: 0.8rem;
 }
 
+/* Acciones del perfil */
 .profile-actions {
-    display: flex;
-    justify-content: flex-end;
-    gap: var(--space-3);
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-3);
 }
 
+/* Transición de despliegue */
 .slide-down-enter-active,
 .slide-down-leave-active {
-    overflow: hidden;
-    transition: all 0.25s ease;
+  overflow: hidden;
+  transition: all 0.25s ease;
 }
 
 .slide-down-enter-from,
 .slide-down-leave-to {
-    max-height: 0;
-    opacity: 0;
-    transform: translateY(-6px);
+  max-height: 0;
+  opacity: 0;
+  transform: translateY(-6px);
 }
 
 .slide-down-enter-to,
 .slide-down-leave-from {
-    max-height: 600px;
-    opacity: 1;
+  max-height: 600px;
+  opacity: 1;
 }
 
+/* Responsive */
 @media (max-width: 1024px) {
     .profile-grid {
         grid-template-columns: 1fr;
