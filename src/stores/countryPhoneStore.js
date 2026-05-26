@@ -43,7 +43,7 @@ export const useCountryPhoneStore = defineStore('countryPhone', () => {
 
       // No forzar selectedCountry a ES para no sobreescribir la elección del usuario
     } catch (error) {
-      console.error('Error al cargar la lista de países:', error)
+      // Se mantiene la lista por defecto si falla la carga
     } finally {
       isLoaded.value = true
     }

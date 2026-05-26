@@ -362,6 +362,81 @@ button:hover {
   color: #6b7280;
 }
 
+/* Shared component utilities */
+.page-header {
+  /* base styles are defined per view; hide on mobile */
+}
+
+@media (max-width: 991.98px) {
+  .page-header {
+    display: none;
+  }
+}
+
+.steps {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin: 10px 0 20px;
+}
+
+.steps span {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: #e5e7eb;
+  color: #6b7280;
+  font-weight: 600;
+}
+
+.steps span.active {
+  background: var(--primary);
+  color: #fff;
+}
+
+@media (max-width: 600px) {
+  .steps {
+    gap: 6px;
+  }
+}
+
+.nav-row {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.table-card {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  padding: var(--space-3);
+  padding-bottom: 0;
+  box-sizing: border-box;
+}
+
+.slide-down-enter-active,
+.slide-down-leave-active {
+  overflow: hidden;
+  transition: all 0.25s ease;
+}
+
+.slide-down-enter-from,
+.slide-down-leave-to {
+  max-height: 0;
+  opacity: 0;
+  transform: translateY(-6px);
+}
+
+.slide-down-enter-to,
+.slide-down-leave-from {
+  max-height: 600px;
+  opacity: 1;
+}
+
 /* Responsive main.css */
 @media (max-width: 1024px) {
   .contentGrid {

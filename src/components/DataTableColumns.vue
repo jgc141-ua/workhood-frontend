@@ -90,15 +90,6 @@ function getItemKey(item, index) {
   padding-bottom: 0;
 }
 
-.table-card {
-  width: 100%;
-  max-width: 100%;
-  min-width: 0;
-  padding: var(--space-3);
-  padding-bottom: 0;
-  box-sizing: border-box;
-}
-
 .table-scroll-area {
   width: 100%;
   max-width: 100%;

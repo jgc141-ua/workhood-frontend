@@ -14,11 +14,3 @@ import MobileHeader from '@/components/MobileHeader.vue'
     </ion-content>
   </ion-page>
 </template>
-
-<style scoped>
-@media (max-width: 991.98px) {
-  .page-header {
-    display: none;
-  }
-}
-</style>

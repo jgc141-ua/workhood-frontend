@@ -90,7 +90,7 @@ const subtitle = inject('SUBTITLE')
       </div>
     </div>
 
-    <ion-button class="primaryAction" expand="block">
+    <ion-button class="primaryAction" expand="block" @click="router.push('/bookings'); isMobile && closeMenu()">
       <span v-if="isCollapsed && !isMobile" class="primaryIcon">+</span>
       <span v-show="showText">New Booking</span>
     </ion-button>

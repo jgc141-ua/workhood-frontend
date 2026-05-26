@@ -22,6 +22,7 @@ const resourceColumns = [
   { key: 'name', label: 'RECURSO', width: '1.5fr' },
   { key: 'resource_type_name', label: 'TIPO', width: '1fr' },
   { key: 'capacity', label: 'CAPACIDAD', width: '1fr' },
+  { key: 'price', label: 'PRECIO/HORA', width: '1fr' },
   { key: 'status', label: 'ESTADO', width: '1fr' },
   { key: 'actions', label: '', width: 'auto' },
 ]
@@ -142,6 +143,9 @@ async function handleDelete() {
       </template>
       <template #cell-capacity="{ item }">
         {{ item.capacity }} {{ item.capacity > 1 ? 'personas' : 'persona' }}
+      </template>
+      <template #cell-price="{ item }">
+        {{ item.price }} €
       </template>
       <template #cell-actions="{ item }">
         <MoreActionsButton :options="moreActionsOpts" @select="(opt) => handleAction(item, opt)" />

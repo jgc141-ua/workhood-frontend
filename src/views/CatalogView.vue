@@ -123,6 +123,7 @@ onMounted(async () => {
         <ResourcesSection :is-create-open="isCreateResourceOpen" @update:is-create-open="isCreateResourceOpen = $event" />
         <ResourceTypesSection :is-create-open="isCreateResourceTypeOpen" @update:is-create-open="isCreateResourceTypeOpen = $event" />
       </section>
+
     </ion-content>
   </ion-page>
 </template>
@@ -159,9 +160,4 @@ onMounted(async () => {
   }
 }
 
-@media (max-width: 991.98px) {
-  .page-header {
-    display: none;
-  }
-}
 </style>

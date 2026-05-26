@@ -382,26 +382,6 @@ async function handleSave() {
   gap: var(--space-3);
 }
 
-/* Transición de despliegue */
-.slide-down-enter-active,
-.slide-down-leave-active {
-  overflow: hidden;
-  transition: all 0.25s ease;
-}
-
-.slide-down-enter-from,
-.slide-down-leave-to {
-  max-height: 0;
-  opacity: 0;
-  transform: translateY(-6px);
-}
-
-.slide-down-enter-to,
-.slide-down-leave-from {
-  max-height: 600px;
-  opacity: 1;
-}
-
 /* Responsive */
 @media (max-width: 1024px) {
     .profile-grid {
@@ -428,9 +408,4 @@ async function handleSave() {
     }
 }
 
-@media (max-width: 991.98px) {
-    .page-header {
-        display: none;
-    }
-}
 </style>

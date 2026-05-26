@@ -83,7 +83,7 @@ useClickOutside(dropdownRef, close)
     <label v-if="label" :for="triggerId">{{ label }}</label>
 
     <button :id="triggerId" type="button" class="selector-trigger" :disabled="disabled" @click="toggle">
-      <img class="selector-img" :src="selectedOption?.imgs || ''">
+      <img v-if="selectedOption?.imgs" class="selector-img" :src="selectedOption?.imgs || ''">
       <span class="selector-value" :class="{ placeholder: !selectedOption }">
         {{ selectedOption?.label || placeholder }}
       </span>
@@ -96,7 +96,7 @@ useClickOutside(dropdownRef, close)
       <ul class="selector-options">
         <li v-for="option in filteredOptions" :key="option.value" class="selector-option"
           :class="{ selected: option.value === modelValue }" @click="select(option)">
-          <img class="selector-img-option" :src="option?.imgs || ''">{{ option.label }}
+          <img v-if="option?.imgs" class="selector-img-option" :src="option?.imgs || ''">{{ option.label }}
         </li>
         <li v-if="!filteredOptions.length" class="selector-option selector-option--empty">
           No se encontraron resultados

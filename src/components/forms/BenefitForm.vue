@@ -134,24 +134,4 @@ function handleSubmit() {
   display: flex;
   flex-direction: column;
 }
-
-.checkbox-group {
-  display: flex;
-  gap: var(--space-3);
-  flex-direction: row;
-  justify-content: center;
-}
-
-.checkbox-group .field {
-  margin-bottom: 0;
-}
-
-.quantity-row {
-  align-items: flex-end;
-}
-
-.quantity-row .checkbox-group {
-  margin-bottom: var(--space-3);
-  flex: 0 0 auto;
-}
 </style>

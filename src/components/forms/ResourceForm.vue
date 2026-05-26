@@ -13,6 +13,7 @@ const props = defineProps({
       name: '',
       description: '',
       capacity: '',
+      price: '',
       availability: true,
       is_active: true,
       resource_type: '',
@@ -36,6 +37,7 @@ const form = ref({
   name: '',
   description: '',
   capacity: '',
+  price: '',
   availability: true,
   is_active: true,
   resource_type: '',
@@ -47,6 +49,7 @@ function syncForm(val) {
     name: val.name ?? '',
     description: val.description ?? '',
     capacity: val.capacity ?? '',
+    price: val.price ?? '',
     availability: val.availability !== false,
     is_active: val.is_active !== false,
     resource_type: val.resource_type ?? '',
@@ -69,6 +72,8 @@ const canSubmit = computed(() => {
     trimmedDescription.value.length <= 100 &&
     form.value.capacity !== '' &&
     Number(form.value.capacity) > 0 &&
+    form.value.price !== '' &&
+    Number(form.value.price) >= 0 &&
     !!form.value.resource_type
   )
 })
@@ -79,6 +84,7 @@ function handleSubmit() {
     name: trimmedName.value,
     description: trimmedDescription.value,
     capacity: Number(form.value.capacity),
+    price: Number(form.value.price),
     availability: !!form.value.availability,
     is_active: !!form.value.is_active,
     resource_type: Number(form.value.resource_type),
@@ -102,6 +108,8 @@ function handleSubmit() {
       placeholder="Selecciona un tipo" search-placeholder="Buscar tipo de recurso..." required />
 
     <FormInput v-model="form.capacity" label="Capacidad" type="number" min="1" placeholder="Ej: 8" required />
+
+    <FormInput v-model="form.price" label="Precio por hora (€)" type="number" min="0" step="0.01" placeholder="Ej: 15.50" required />
 
     <div class="field checkbox-group">
       <PrettyCheckbox v-model="form.availability" text="Disponible" />

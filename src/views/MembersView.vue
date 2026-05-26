@@ -575,9 +575,4 @@ onMounted(async () => {
   }
 }
 
-@media (max-width: 991.98px) {
-  .page-header {
-    display: none;
-  }
-}
 </style>

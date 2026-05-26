@@ -82,15 +82,6 @@ function getItemKey(item, index) {
   padding-bottom: 0;
 }
 
-.table-card {
-  width: 100%;
-  max-width: 100%;
-  min-width: 0;
-  padding: var(--space-3);
-  padding-bottom: 0;
-  box-sizing: border-box;
-}
-
 .table-scroll-area {
   width: 100%;
   max-width: 100%;
@@ -134,13 +125,6 @@ function getItemKey(item, index) {
     gap: var(--space-3);
     flex-wrap: wrap;
     align-items: flex-start;
-  }
-
-  .data-table-pagination {
-    text-align: center;
-    align-items: center;
-    justify-content: center;
-    flex-direction: column;
   }
 }
 </style>
