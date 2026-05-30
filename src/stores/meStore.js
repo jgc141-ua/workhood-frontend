@@ -17,7 +17,7 @@ export const useMeStore = defineStore('me', () => {
     const res = await apiFetch(ENDPOINTS.me, {}, tokenStore)
     const data = await res.json()
     const roleName = data.role?.name || data.role || ''
-    data.role = roleName
+    data.role = roleName.replace('_', ' ')
     user.value = data
 
     const profile = { first_name: data.first_name, role: roleName }

@@ -47,4 +47,16 @@ export const ENDPOINTS = {
   resourceCreate: BASE + '/resources/create/',
   resourceUpdate: BASE + '/resources/update/',
   resourceDelete: BASE + '/resources/delete/',
+
+  // Reservations
+  myReservations: BASE + '/reservations/my/',
+  createReservation: BASE + '/reservations/create/',
+  checkAvailability: BASE + '/reservations/availability/',
+  resourceSchedule: BASE + '/reservations/resource-schedule/',
+
+  // SpaceSchedule
+  spaceSchedules: BASE + '/space-schedule/all/',
+  spaceScheduleCreate: BASE + '/space-schedule/create/',
+  spaceScheduleUpdate: BASE + '/space-schedule/update/',
+  spaceScheduleDelete: BASE + '/space-schedule/delete/',
 }

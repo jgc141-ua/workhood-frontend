@@ -11,16 +11,19 @@ import {
   CategoryScale,
   LinearScale,
 } from 'chart.js'
-import { IonPage, IonContent } from '@ionic/vue'
+import { IonPage, IonContent, IonButton } from '@ionic/vue'
 import Card from '@/components/Card.vue'
 import ActionCard from '@/components/ActionCard.vue'
 import MobileHeader from '@/components/MobileHeader.vue'
 import { useMeStore } from '@/stores/meStore'
 import { useMembershipStore } from '@/stores/membershipStore'
 import SubscribeMembershipModal from '@/components/SubscribeMembershipModal.vue'
+import SpaceScheduleSection from '@/components/sections/SpaceScheduleSection.vue'
 
 const meStore = useMeStore()
 const membershipStore = useMembershipStore()
+
+const spaceScheduleRef = ref(null)
 
 const isSubscribeModalOpen = ref(false)
 const isAdmin = computed(() => meStore.user?.role === 'ADMIN')
@@ -128,11 +131,18 @@ const brand = inject('BRAND')
   <ion-page>
     <MobileHeader title="Dashboard" />
     <ion-content :fullscreen="true" class="ion-padding">
-      <!-- Cabecera del dashboard -->
-      <div class="main-header page-header">
-        <p class="eyebrow">VISTA GENERAL DEL {{ meStore.user?.role.toUpperCase() }}</p>
-        <h2 class="title">Bienvenido a {{ brand }}, {{ meStore.user?.first_name }}</h2>
-      </div>
+      <section class="dashboard-action">
+        <!-- Cabecera del dashboard -->
+        <div class="main-header page-header">
+          <p class="eyebrow">VISTA GENERAL DEL {{ meStore.user?.role.toUpperCase() }}</p>
+          <h2 class="title">Bienvenido a {{ brand }}, {{ meStore.user?.first_name }}</h2>
+        </div>
+
+        <button v-if="isAdmin" class="btn btn-primary top-action" type="button"
+          @click="spaceScheduleRef.openCreateModal()">
+          <span>Añadir horario</span>
+        </button>
+      </section>
 
       <!-- Modal de suscripción -->
       <SubscribeMembershipModal :show="isSubscribeModalOpen" @close="closeSubscribeModal" @subscribed="onSubscribed" />
@@ -166,7 +176,8 @@ const brand = inject('BRAND')
           <div class="membership-active-meta">
             <span class="pill-button pill-button-success pill-subscribe">Activa hasta {{ new
               Date(membershipStore.myMembership.end_date).toLocaleDateString() }}</span>
-            <span class="pill-button" :class="membershipStore.myMembership.auto_renew ? 'pill-button-success' : 'pill-button-warn'">
+            <span class="pill-button"
+              :class="membershipStore.myMembership.auto_renew ? 'pill-button-success' : 'pill-button-warn'">
               {{ membershipStore.myMembership.auto_renew ? 'Renovación automática' : 'Sin renovación automática' }}
             </span>
           </div>
@@ -177,6 +188,9 @@ const brand = inject('BRAND')
       <section class="statsGrid">
         <Card v-for="stat in stats" :key="stat.label" :label="stat.label" :value="stat.value" :delta="stat.delta" />
       </section>
+
+      <!-- Gestión de horarios del espacio (solo admin) -->
+      <SpaceScheduleSection v-if="isAdmin" ref="spaceScheduleRef" class="dashboard-schedule-section" />
 
       <!-- Contenido principal: gráfico y paneles laterales -->
       <section class="contentGrid">
@@ -227,9 +241,24 @@ const brand = inject('BRAND')
   padding: 10px;
 }
 
+.dashboard-action {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.dashboard-action button {
+  height: fit-content;
+}
+
 /* Cabecera del dashboard */
 .main-header {
   margin-bottom: 24px;
+}
+
+.dashboard-schedule-section {
+  margin-bottom: var(--space-6);
 }
 
 /* Cabeceras de panel */
@@ -296,27 +325,9 @@ const brand = inject('BRAND')
   }
 }
 
-@media (max-width: 991.98px) {
-  .page-header {
-    display: none;
-  }
-}
-
 .membership-alert,
-.membership-active,
-.membership-admin {
+.membership-active {
   margin-bottom: var(--space-6);
-}
-
-.membership-admin h3 {
-  margin: 0 0 var(--space-1);
-  font-size: 1.1rem;
-}
-
-.membership-admin p {
-  margin: 0;
-  color: #6b7280;
-  font-size: 0.95rem;
 }
 
 .membership-alert-content,
