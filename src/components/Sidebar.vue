@@ -51,16 +51,16 @@ const auth = useAuthStore()
 // Items de navegación según el rol del usuario
 const items = computed(() => {
   const baseItems = [
-    { label: 'Dashboard', to: '/', icon: IconDashboard, iconFilled: IconDashboardFilled },
-    { label: 'Bookings', to: '/bookings', icon: IconBookings, iconFilled: IconBookingsFilled },
-    { label: 'My profile', to: '/me', icon: IconProfile, iconFilled: IconProfileFilled },
+    { label: 'Panel principal', to: '/', icon: IconDashboard, iconFilled: IconDashboardFilled },
+    { label: 'Reservas', to: '/bookings', icon: IconBookings, iconFilled: IconBookingsFilled },
+    { label: 'Mi perfil', to: '/me', icon: IconProfile, iconFilled: IconProfileFilled },
   ]
 
   if (meStore.user?.role === 'ADMIN') {
     baseItems.splice(2, 0,
-      { label: 'Members', to: '/members', icon: IconMembers, iconFilled: IconMembersFilled },
+      { label: 'Miembros', to: '/members', icon: IconMembers, iconFilled: IconMembersFilled },
       { label: 'Catálogo', to: '/catalog', icon: IconCatalog, iconFilled: IconCatalogFilled },
-      { label: 'Reports', to: '/reports', icon: IconReport, iconFilled: IconReportFilled }
+      { label: 'Reportes', to: '/reports', icon: IconReport, iconFilled: IconReportFilled }
     )
   }
 

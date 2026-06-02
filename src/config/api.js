@@ -50,7 +50,9 @@ export const ENDPOINTS = {
 
   // Reservations
   myReservations: BASE + '/reservations/my/',
+  allReservations: BASE + '/reservations/all/',
   createReservation: BASE + '/reservations/create/',
+  cancelReservation: BASE + '/reservations/cancel/',
   checkAvailability: BASE + '/reservations/availability/',
   resourceSchedule: BASE + '/reservations/resource-schedule/',
 

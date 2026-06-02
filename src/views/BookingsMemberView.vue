@@ -1,14 +1,16 @@
 <script setup>
-import { onMounted, ref, computed } from 'vue'
+import { onMounted, ref, computed, watch } from 'vue'
 import { IonContent, onIonViewWillEnter } from '@ionic/vue'
 import MobileHeader from '@/components/MobileHeader.vue'
 import AppModal from '@/components/AppModal.vue'
 import ReservationForm from '@/components/ReservationForm.vue'
 import MoreActionsButton from '@/components/MoreActionsButton.vue'
+import ReservationDateRange from '@/components/ReservationDateRange.vue'
+import ReservationFilters from '@/components/ReservationFilters.vue'
+import ConfirmModal from '@/components/ConfirmModal.vue'
 import { useResourceStore } from '@/stores/resourceStore'
 import { useReservationStore } from '@/stores/reservationStore'
 import { showToast } from '@/composables/toast'
-import IconEdit from '@/assets/icons/IconEdit.vue'
 import IconTrash from '@/assets/icons/IconTrash.vue'
 
 const resourceStore = useResourceStore()
@@ -21,10 +23,24 @@ const expandedResources = ref(new Set())
 const schedules = ref({})
 const selectedDate = ref(new Date().toISOString().split('T')[0])
 const activeTab = ref('new') // 'new' | 'my'
+const selectedState = ref('all')
+const selectedTime = ref('upcoming')
+
+const stateLabels = {
+  Pending: 'Pendiente',
+  Confirmed: 'Confirmada',
+  Cancelled: 'Cancelada',
+}
+
+const typeLabels = {
+  HOURLY: 'Por horas',
+  DAILY: 'Día completo',
+  WEEKLY: 'Semanal',
+  MONTHLY: 'Mensual',
+}
 
 const reservationOptions = [
-  { icon: IconEdit, label: 'Modificar reserva', danger: false },
-  { icon: IconTrash, label: 'Cancelar reserva', danger: true },
+  { icon: IconTrash, label: 'Cancelar reserva', action: 'cancel', danger: true },
 ]
 
 const activeResources = computed(() =>
@@ -35,44 +51,54 @@ function formatTimeForInput(date, time) {
   return `${date}T${time}`
 }
 
+function buildMyReservationsParams() {
+  const params = {}
+
+  if (selectedState.value !== 'all') params.state = selectedState.value
+  if (selectedTime.value !== 'all') {
+    params.upcoming = selectedTime.value === 'upcoming' ? 'true' : 'false'
+  }
+
+  return params
+}
+
+async function loadMyReservations() {
+  try {
+    await reservationStore.fetchMyReservations(buildMyReservationsParams())
+  } catch (err) {
+    showToast(err.message || 'Error al cargar tus reservas')
+  }
+}
+
 function setTab(tab) {
   activeTab.value = tab
   if (tab === 'my') {
-    reservationStore.fetchMyReservations().catch((err) => {
-      showToast(err.message || 'Error al cargar tus reservas')
-    })
+    loadMyReservations()
   }
 }
 
-function parseDatetime(value) {
-  if (!value) return null
-  const match = value.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/)
-  if (!match) return null
-  const [, year, month, day, hour, minute] = match
-  return { year, month, day, hour, minute }
+function isReservationPast(reservation) {
+  return new Date(reservation.start_time) < new Date()
 }
 
-function formatDateOnly(value) {
-  const parsed = parseDatetime(value)
-  if (!parsed) return '-'
-  return `${parsed.day}/${parsed.month}/${parsed.year}`
-}
-
-function formatTimeOnly(value) {
-  const parsed = parseDatetime(value)
-  if (!parsed) return '-'
-  return `${parsed.hour}:${parsed.minute}`
-}
-
-function formatType(value) {
-  const types = {
-    HOURLY: 'Por horas',
-    DAILY: 'Día completo',
-    WEEKLY: 'Semanal',
-    MONTHLY: 'Mensual',
+function handleReservationAction(reservation, option) {
+  if (option.action === 'cancel') {
+    reservationStore.openCancelModal(reservation)
   }
-  return types[value] || value
 }
+
+async function handleConfirmCancel() {
+  try {
+    await reservationStore.confirmCancel(loadMyReservations)
+    showToast('Reserva cancelada correctamente', 'success')
+  } catch (err) {
+    showToast(err.message || 'Error al cancelar la reserva')
+  }
+}
+
+watch([selectedState, selectedTime], () => {
+  loadMyReservations()
+})
 
 function toggleResource(resourceId) {
   const next = new Set(expandedResources.value)
@@ -127,7 +153,10 @@ function closeReservationModal() {
 
 async function onReserved() {
   closeReservationModal()
-  await loadSchedules()
+  await Promise.all([
+    loadSchedules(),
+    loadMyReservations(),
+  ])
 }
 
 async function loadSchedules() {
@@ -147,7 +176,7 @@ async function loadInitialData() {
   }
   await Promise.all([
     loadSchedules(),
-    reservationStore.fetchMyReservations().catch(() => { }),
+    loadMyReservations().catch(() => { }),
   ])
 }
 
@@ -156,128 +185,125 @@ onIonViewWillEnter(loadInitialData)
 </script>
 
 <template>
-  <MobileHeader title="Bookings" />
+  <MobileHeader title="Reservas" />
   <ion-content :fullscreen="true" class="ion-padding">
-      <div class="row-between">
-        <header class="page-header">
-          <div>
-            <p class="eyebrow">GESTIÓN DE RESERVAS</p>
-            <h1 class="title">Bookings</h1>
-          </div>
-        </header>
-        <div class="booking-tabs" role="tablist" aria-label="Pestañas de reservas">
-          <button type="button" class="booking-tab" :class="{ 'booking-tab-active': activeTab === 'new' }"
-            @click="setTab('new')">
-            Nueva reserva
-          </button>
-          <button type="button" class="booking-tab" :class="{ 'booking-tab-active': activeTab === 'my' }"
-            @click="setTab('my')">
-            Mis reservas
-          </button>
+    <div class="row-between">
+      <header class="page-header">
+        <div>
+          <p class="eyebrow">GESTIÓN DE RESERVAS</p>
+          <h1 class="title">Reservas</h1>
         </div>
+      </header>
+      <div class="booking-tabs" role="tablist" aria-label="Pestañas de reservas">
+        <button type="button" class="booking-tab" :class="{ 'booking-tab-active': activeTab === 'new' }"
+          @click="setTab('new')">
+          Nueva reserva
+        </button>
+        <button type="button" class="booking-tab" :class="{ 'booking-tab-active': activeTab === 'my' }"
+          @click="setTab('my')">
+          Mis reservas
+        </button>
+      </div>
+    </div>
+
+    <AppModal :show="isReservationModalOpen" title="Nueva reserva" @close="closeReservationModal">
+      <ReservationForm v-if="selectedResource"
+        :key="`${selectedResource.id}-${selectedDate}-${selectedBlock?.start_time || ''}-${selectedBlock?.end_time || ''}`"
+        :initial-resource="selectedResource.id" :initial-date="selectedDate"
+        :initial-start-time="selectedBlock ? formatTimeForInput(selectedDate, selectedBlock.start_time) : ''"
+        :initial-end-time="selectedBlock ? formatTimeForInput(selectedDate, selectedBlock.end_time) : ''"
+        @reserved="onReserved" @cancel="closeReservationModal" />
+    </AppModal>
+
+    <ConfirmModal :show="reservationStore.isCancelModalOpen" title="Cancelar reserva"
+      message="¿Estás seguro de que deseas cancelar la reserva de"
+      :item-name="reservationStore.reservationToCancel?.resource_name" confirm-label="Cancelar reserva" confirm-danger
+      @confirm="handleConfirmCancel" @close="reservationStore.closeCancelModal"
+      @after-close="reservationStore.resetCancelModal" />
+
+    <!-- Nueva reserva -->
+    <section v-if="activeTab === 'new'" class="resources-section">
+      <div class="date-selector-bar">
+        <label for="booking-date" class="date-selector-label">Reservar para:</label>
+        <input id="booking-date" v-model="selectedDate" type="date" class="date-selector-input"
+          @change="loadSchedules" />
       </div>
 
-      <AppModal :show="isReservationModalOpen" title="Nueva reserva" @close="closeReservationModal">
-        <ReservationForm v-if="selectedResource"
-          :key="`${selectedResource.id}-${selectedDate}-${selectedBlock?.start_time || ''}-${selectedBlock?.end_time || ''}`"
-          :initial-resource="selectedResource.id" :initial-date="selectedDate"
-          :initial-start-time="selectedBlock ? formatTimeForInput(selectedDate, selectedBlock.start_time) : ''"
-          :initial-end-time="selectedBlock ? formatTimeForInput(selectedDate, selectedBlock.end_time) : ''"
-          @reserved="onReserved" @cancel="closeReservationModal" />
-      </AppModal>
+      <div v-if="resourceStore.loading" class="server-state">Cargando recursos...</div>
+      <div v-else-if="!activeResources.length" class="server-state">
+        No hay recursos disponibles.
+      </div>
 
-      <!-- Nueva reserva -->
-      <section v-if="activeTab === 'new'" class="resources-section">
-        <div class="date-selector-bar">
-          <label for="booking-date" class="date-selector-label">Reservar para:</label>
-          <input id="booking-date" v-model="selectedDate" type="date" class="date-selector-input"
-            @change="loadSchedules" />
-        </div>
+      <div v-else class="resource-cards">
+        <article v-for="resource in activeResources" :key="resource.id" class="card resource-card">
+          <div class="resource-header">
+            <h3 class="resource-name">{{ resource.name }}</h3>
+            <div class="resource-meta-price">
+              <p class="resource-meta">
+                <b>Tipo:</b> {{ resource.resource_type_name }}
+                <br />
+                <b>Capacidad:</b> {{ resource.capacity }} personas
+                <br />
+              </p>
+              <b class="pill-button resource-price" style="margin: 0;">{{ resource.price }} €/hora</b>
+            </div>
+          </div>
 
-        <div v-if="resourceStore.loading" class="server-state">Cargando recursos...</div>
-        <div v-else-if="!activeResources.length" class="server-state">
-          No hay recursos disponibles.
-        </div>
-
-        <div v-else class="resource-cards">
-          <article v-for="resource in activeResources" :key="resource.id" class="card resource-card">
-            <div class="resource-header">
-              <h3 class="resource-name">{{ resource.name }}</h3>
-              <div class="resource-meta-price">
-                <p class="resource-meta">
-                  <b>Tipo:</b> {{ resource.resource_type_name }}
-                  <br />
-                  <b>Capacidad:</b> {{ resource.capacity }} personas
-                  <br />
-                </p>
-                <b class="pill-button resource-price" style="margin: 0;">{{ resource.price }} €/hora</b>
+          <!-- Horarios disponibles del recurso -->
+          <div v-if="schedules[resource.id]?.is_open" class="resource-schedule">
+            <div v-for="(row, rowIndex) in getVisibleRows(resource.id)" :key="rowIndex" class="schedule-row">
+              <div v-for="(block, blockIndex) in row" :key="blockIndex" class="time-block" :class="block.status"
+                @click="handleBlockClick(resource, block)">
+                <span class="time-range">{{ block.start_time }} - {{ block.end_time }}</span>
               </div>
             </div>
+          </div>
 
-            <!-- Horarios disponibles del recurso -->
-            <div v-if="schedules[resource.id]?.is_open" class="resource-schedule">
-              <div v-for="(row, rowIndex) in getVisibleRows(resource.id)" :key="rowIndex" class="schedule-row">
-                <div v-for="(block, blockIndex) in row" :key="blockIndex" class="time-block" :class="block.status"
-                  @click="handleBlockClick(resource, block)">
-                  <span class="time-range">{{ block.start_time }} - {{ block.end_time }}</span>
-                </div>
-              </div>
+          <button v-if="schedules[resource.id]?.blocks.length > 3" type="button" class="btn btn-text"
+            @click="toggleResource(resource.id)">
+            {{ isExpanded(resource.id) ? 'Ver menos' : 'Ver más' }}
+          </button>
+
+          <div v-if="schedules[resource.id]?.blocks.length == 0" class="resource-closed">
+            <span class="pill-button pill-button-warn" style="color: white;">Cerrado</span>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <!-- Mis reservas -->
+    <section v-if="activeTab === 'my'" class="my-reservations-section">
+      <ReservationFilters v-model:state="selectedState" v-model:time="selectedTime" />
+
+      <div v-if="reservationStore.loading" class="server-state">Cargando reservas...</div>
+      <div v-else-if="!reservationStore.reservations.length" class="server-state">
+        No hay reservas
+      </div>
+
+      <div v-else class="reservation-cards">
+        <article v-for="reservation in reservationStore.reservations" :key="reservation.id"
+          class="card reservation-card">
+          <div class="reservation-card-info">
+            <div class="reservation-title-actions">
+              <h3 class="reservation-card-title">{{ reservation.resource_name }}</h3>
+              <MoreActionsButton v-if="reservation.state !== 'Cancelled' && !isReservationPast(reservation)"
+                :options="reservationOptions" @select="(opt) => handleReservationAction(reservation, opt)" />
             </div>
-
-            <button v-if="schedules[resource.id]?.blocks.length > 3" type="button" class="btn btn-text"
-              @click="toggleResource(resource.id)">
-              {{ isExpanded(resource.id) ? 'Ver menos' : 'Ver más' }}
-            </button>
-
-            <div v-if="schedules[resource.id]?.blocks.length == 0" class="resource-closed">
-              <span class="pill-button pill-button-warn" style="color: white;">Cerrado</span>
+            <div class="reservation-card-meta">
+              <span class="reservation-badge" :class="`reservation-badge--${reservation.state.toLowerCase()}`">
+                {{ stateLabels[reservation.state] || reservation.state }}
+              </span>
+              <span class="reservation-pill">{{ typeLabels[reservation.reservation_type] || reservation.reservation_type
+              }}</span>
             </div>
-          </article>
-        </div>
-      </section>
+          </div>
 
-      <!-- Mis reservas -->
-      <section v-if="activeTab === 'my'" class="my-reservations-section">
-        <div v-if="reservationStore.loading" class="server-state">Cargando reservas...</div>
-        <div v-else-if="!reservationStore.reservations.length" class="server-state">
-          No tienes reservas todavía.
-        </div>
+          <ReservationDateRange :start-time="reservation.start_time" :end-time="reservation.end_time" size="md" />
 
-        <div v-else class="reservation-cards">
-          <article v-for="reservation in reservationStore.reservations" :key="reservation.id"
-            class="card reservation-card">
-            <div class="reservation-card-info">
-              <div class="reservation-title-actions">
-                <h3 class="reservation-card-title">{{ reservation.resource_name }}</h3>
-                <MoreActionsButton :options="reservationOptions" />
-              </div>
-              <div class="reservation-card-meta">
-                <span class="reservation-state-badge"
-                  :class="reservation.state === 'Confirmed' ? 'badge-confirmed' : 'badge-pending'">
-                  {{ reservation.state === 'Confirmed' ? 'Confirmada' : reservation.state }}
-                </span>
-                <span class="reservation-type-pill">{{ formatType(reservation.reservation_type) }}</span>
-              </div>
-            </div>
-
-            <div class="reservation-datetimes">
-              <div class="reservation-datetime">
-                <span class="reservation-datetime-label">Inicio</span>
-                <span class="reservation-datetime-time">{{ formatTimeOnly(reservation.start_time) }}</span>
-                <span class="reservation-datetime-date">{{ formatDateOnly(reservation.start_time) }}</span>
-              </div>
-              <div class="reservation-datetime-separator">→</div>
-              <div class="reservation-datetime">
-                <span class="reservation-datetime-label">Fin</span>
-                <span class="reservation-datetime-time">{{ formatTimeOnly(reservation.end_time) }}</span>
-                <span class="reservation-datetime-date">{{ formatDateOnly(reservation.end_time) }}</span>
-              </div>
-            </div>
-
-            <span class="reservation-price">{{ reservation.total_price }} €</span>
-          </article>
-        </div>
-      </section>
+          <span class="reservation-price">{{ reservation.total_price }} €</span>
+        </article>
+      </div>
+    </section>
   </ion-content>
 </template>
 
@@ -349,6 +375,10 @@ onIonViewWillEnter(loadInitialData)
 
 .my-reservations-section {
   margin-top: var(--space-6);
+}
+
+.my-reservations-section .reservation-filters {
+  margin-bottom: var(--space-5);
 }
 
 .resource-cards {
@@ -512,80 +542,6 @@ onIonViewWillEnter(loadInitialData)
   flex-wrap: wrap;
 }
 
-.reservation-state-badge {
-  flex-shrink: 0;
-  padding: 0.25rem 0.6rem;
-  border-radius: 9999px;
-  font-size: 0.7rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.02em;
-  color: #fff;
-  background: #9ca3af;
-}
-
-.badge-confirmed {
-  background: #0f6a52;
-}
-
-.badge-pending {
-  background: #f59e0b;
-}
-
-.reservation-datetimes {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-4);
-  background: var(--surface-container-low);
-  padding: var(--space-3) var(--space-4);
-  border-radius: var(--radius-md);
-}
-
-.reservation-datetime {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.15rem;
-  min-width: 70px;
-  text-align: center;
-}
-
-.reservation-datetime-label {
-  font-size: 0.65rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: #9ca3af;
-}
-
-.reservation-datetime-time {
-  font-size: 1.2rem;
-  font-weight: 700;
-  color: var(--on-surface);
-  line-height: 1.2;
-}
-
-.reservation-datetime-date {
-  font-size: 0.75rem;
-  color: #6b7280;
-}
-
-.reservation-datetime-separator {
-  font-size: 1rem;
-  font-weight: 700;
-  color: var(--primary);
-}
-
-.reservation-type-pill {
-  padding: 0.25rem 0.6rem;
-  border-radius: var(--radius-md);
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: var(--primary);
-  background: rgba(0, 108, 79, 0.08);
-}
-
 .reservation-price {
   font-size: 1.15rem;
   font-weight: 700;
@@ -599,9 +555,42 @@ onIonViewWillEnter(loadInitialData)
     gap: var(--space-4);
   }
 
-  .reservation-datetimes {
+  .reservation-date-range {
     width: 100%;
     justify-content: space-between;
   }
+}
+
+.reservation-badge {
+  flex-shrink: 0;
+  padding: 0.25rem 0.6rem;
+  border-radius: 9999px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  color: #fff;
+  background: #9ca3af;
+}
+
+.reservation-badge--confirmed {
+  background: #0f6a52;
+}
+
+.reservation-badge--pending {
+  background: #f59e0b;
+}
+
+.reservation-badge--cancelled {
+  background: #dc2626;
+}
+
+.reservation-pill {
+  padding: 0.25rem 0.6rem;
+  border-radius: var(--radius-md);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--primary);
+  background: rgba(0, 108, 79, 0.08);
 }
 </style>

@@ -5,11 +5,11 @@ import MobileHeader from '@/components/MobileHeader.vue'
 
 <template>
   <ion-page>
-    <MobileHeader title="Reports" />
+    <MobileHeader title="Reportes" />
     <ion-content :fullscreen="true" class="ion-padding">
       <header class="page-header">
         <p class="eyebrow">INFORMES Y ESTADISTICAS</p>
-        <h1 class="title">Reports</h1>
+        <h1 class="title">Reportes</h1>
       </header>
     </ion-content>
   </ion-page>
