@@ -61,4 +61,10 @@ export const ENDPOINTS = {
   spaceScheduleCreate: BASE + '/space-schedule/create/',
   spaceScheduleUpdate: BASE + '/space-schedule/update/',
   spaceScheduleDelete: BASE + '/space-schedule/delete/',
+
+  // Accesses
+  accessCheckIn: BASE + '/accesses/check-in/',
+  accessCheckOut: BASE + '/accesses/check-out/',
+  accessLogs: BASE + '/accesses/logs/',
+  accessMyLogs: BASE + '/accesses/my-logs/',
 }

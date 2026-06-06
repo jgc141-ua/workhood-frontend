@@ -17,23 +17,43 @@ import ActionCard from '@/components/ActionCard.vue'
 import MobileHeader from '@/components/MobileHeader.vue'
 import { useMeStore } from '@/stores/meStore'
 import { useMembershipStore } from '@/stores/membershipStore'
+import { useAccessStore } from '@/stores/accessStore'
+import { showToast } from '@/composables/toast'
 import SubscribeMembershipModal from '@/components/SubscribeMembershipModal.vue'
 import SpaceScheduleSection from '@/components/sections/SpaceScheduleSection.vue'
 
 const meStore = useMeStore()
 const membershipStore = useMembershipStore()
+const accessStore = useAccessStore()
 
 const spaceScheduleRef = ref(null)
 
 const isSubscribeModalOpen = ref(false)
 const isAdmin = computed(() => meStore.user?.role === 'ADMIN')
+const accessMessage = ref('')
+const lastAccess = ref(null)
 
-// Carga de la membresía del usuario autenticado
+const canCheckOut = computed(() => {
+  if (!lastAccess.value) return false
+  return lastAccess.value.type === 'ENTRADA' && lastAccess.value.result === 'PERMITIDO'
+})
+
+// Carga de la membresía y el último acceso del usuario autenticado
 onMounted(() => {
   if (!isAdmin.value) {
     membershipStore.fetchMyMembership().catch(() => { })
+    loadLastAccess()
   }
 })
+
+async function loadLastAccess() {
+  try {
+    const data = await accessStore.fetchMyLogs({ page: 1, pageSize: 1 })
+    lastAccess.value = data.results?.[0] || null
+  } catch {
+    lastAccess.value = null
+  }
+}
 
 function openSubscribeModal() {
   isSubscribeModalOpen.value = true
@@ -45,6 +65,29 @@ function closeSubscribeModal() {
 
 async function onSubscribed() {
   await membershipStore.fetchMyMembership()
+}
+
+async function handleCheckIn() {
+  try {
+    const data = await accessStore.checkIn()
+    lastAccess.value = data
+    const resultText = data.result === 'PERMITIDO' ? 'permitido' : 'denegado'
+    accessMessage.value = `Entrada ${resultText}`
+    showToast(`Acceso ${resultText}`, data.result === 'PERMITIDO' ? 'success' : 'danger')
+  } catch (err) {
+    showToast(err.message || 'Error al registrar la entrada')
+  }
+}
+
+async function handleCheckOut() {
+  try {
+    const data = await accessStore.checkOut()
+    lastAccess.value = data
+    accessMessage.value = 'Salida registrada'
+    showToast('Salida registrada', 'success')
+  } catch (err) {
+    showToast(err.message || 'Error al registrar la salida')
+  }
 }
 
 ChartJS.register(Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale)
@@ -142,6 +185,20 @@ const brand = inject('BRAND')
           @click="spaceScheduleRef.openCreateModal()">
           <span>Añadir horario</span>
         </button>
+
+        <!-- Acceso rápido para clientes -->
+        <section v-else class="access-quick-actions">
+          <div class="access-buttons">
+            <button v-if="!canCheckOut" class="btn btn-primary top-action" type="button" :disabled="accessStore.loading"
+              @click="handleCheckIn">
+              Registrar entrada
+            </button>
+            <button v-else class="btn btn-secondary" type="button" :disabled="accessStore.loading"
+              @click="handleCheckOut">
+              Registrar salida
+            </button>
+          </div>
+        </section>
       </section>
 
       <!-- Modal de suscripción -->
@@ -364,5 +421,22 @@ const brand = inject('BRAND')
   .statsGrid {
     grid-template-columns: 1fr;
   }
+}
+
+/* Acceso rápido */
+.access-quick-actions {
+  margin-bottom: var(--space-6);
+}
+
+.access-buttons {
+  display: flex;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.access-message {
+  margin: var(--space-2) 0 0;
+  font-size: 0.9rem;
+  color: #6b7280;
 }
 </style>
