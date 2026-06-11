@@ -124,7 +124,7 @@ async function handleDelete() {
       message="¿Estás seguro de que deseas eliminar el beneficio" :item-name="benefitToDelete?.name"
       confirm-label="Eliminar" @confirm="handleDelete" @close="closeDeleteModal" @after-close="onDeleteModalClosed" />
 
-    <DataTableList class="benefits-table" :columns="[{ key: 'benefit', label: 'BENEFICIO', width: '1fr' }]"
+    <DataTableList class="benefits-table"
       :items="benefitStore.benefits" key-field="id" :loading="benefitStore.loading" :error="!!benefitStore.error"
       :pagination="{ page: benefitStore.page, pageSize: benefitStore.pageSize, total: benefitStore.count }"
       @prev-page="benefitStore.setPage(benefitStore.page - 1)" @next-page="benefitStore.setPage(benefitStore.page + 1)">

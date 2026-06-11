@@ -153,6 +153,17 @@ ion-content.ion-padding {
   padding: 0.95rem 1.15rem;
 }
 
+.btn-text {
+  display: flex;
+  justify-content: center;
+  background: transparent;
+  color: var(--primary);
+  font-weight: 600;
+  padding: var(--space-2) 0;
+  text-align: left;
+  border-radius: 10px;
+}
+
 @media (max-width: 600px) {
   .top-action {
     width: 100%;
@@ -363,10 +374,6 @@ button:hover {
 }
 
 /* Shared component utilities */
-.page-header {
-  /* base styles are defined per view; hide on mobile */
-}
-
 @media (max-width: 991.98px) {
   .page-header {
     display: none;

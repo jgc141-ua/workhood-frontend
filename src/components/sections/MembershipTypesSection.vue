@@ -121,7 +121,7 @@ async function handleDelete() {
       message="¿Estás seguro de que deseas eliminar la membresía" :item-name="typeToDelete?.name"
       confirm-label="Eliminar" @confirm="handleDelete" @close="closeDeleteModal" @after-close="onDeleteModalClosed" />
 
-    <DataTableList class="membership-table" :columns="[{ key: 'plan', label: 'MEMBRESÍAS', width: '1fr' }]"
+    <DataTableList class="membership-table"
       :items="membershipTypeStore.membershipTypes" key-field="id" :loading="membershipTypeStore.loading"
       :error="!!membershipTypeStore.error"
       :pagination="{ page: membershipTypeStore.page, pageSize: membershipTypeStore.pageSize, total: membershipTypeStore.count }"

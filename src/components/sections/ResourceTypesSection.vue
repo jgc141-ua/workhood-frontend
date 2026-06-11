@@ -123,7 +123,6 @@ async function handleDelete() {
       confirm-label="Eliminar" @confirm="handleDelete" @close="closeDeleteModal" @after-close="onDeleteModalClosed" />
 
     <DataTableList class="resource-types-table"
-      :columns="[{ key: 'resourceType', label: 'TIPO DE RECURSO', width: '1fr' }]"
       :items="resourceTypeStore.resourceTypes" key-field="id" :loading="resourceTypeStore.loading"
       :error="!!resourceTypeStore.error"
       :pagination="{ page: resourceTypeStore.page, pageSize: resourceTypeStore.pageSize, total: resourceTypeStore.count }"

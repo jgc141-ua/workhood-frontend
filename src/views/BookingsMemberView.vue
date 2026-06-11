@@ -7,14 +7,17 @@ import ReservationForm from '@/components/ReservationForm.vue'
 import MoreActionsButton from '@/components/MoreActionsButton.vue'
 import ReservationDateRange from '@/components/ReservationDateRange.vue'
 import ReservationFilters from '@/components/ReservationFilters.vue'
+import DataTablePagination from '@/components/DataTablePagination.vue'
 import ConfirmModal from '@/components/ConfirmModal.vue'
 import { useResourceStore } from '@/stores/resourceStore'
 import { useReservationStore } from '@/stores/reservationStore'
+import { useAuthStore } from '@/stores/authStore'
 import { showToast } from '@/composables/toast'
 import IconTrash from '@/assets/icons/IconTrash.vue'
 
 const resourceStore = useResourceStore()
 const reservationStore = useReservationStore()
+const authStore = useAuthStore()
 
 const isReservationModalOpen = ref(false)
 const selectedResource = ref(null)
@@ -51,23 +54,16 @@ function formatTimeForInput(date, time) {
   return `${date}T${time}`
 }
 
-function buildMyReservationsParams() {
+function buildMyReservationsParams(page = null) {
   const params = {}
 
+  if (page != null) params.page = page
   if (selectedState.value !== 'all') params.state = selectedState.value
   if (selectedTime.value !== 'all') {
     params.upcoming = selectedTime.value === 'upcoming' ? 'true' : 'false'
   }
 
   return params
-}
-
-async function loadMyReservations() {
-  try {
-    await reservationStore.fetchMyReservations(buildMyReservationsParams())
-  } catch (err) {
-    showToast(err.message || 'Error al cargar tus reservas')
-  }
 }
 
 function setTab(tab) {
@@ -97,8 +93,34 @@ async function handleConfirmCancel() {
 }
 
 watch([selectedState, selectedTime], () => {
-  loadMyReservations()
+  loadMyReservations(1)
 })
+
+async function loadMyReservations(targetPage = null) {
+  try {
+    await reservationStore.fetchMyReservations(buildMyReservationsParams(targetPage))
+  } catch (err) {
+    showToast(err.message || 'Error al cargar tus reservas')
+  }
+}
+
+function onPrevMyPage() {
+  if (reservationStore.page > 1) {
+    loadMyReservations(reservationStore.page - 1)
+  }
+}
+
+function onNextMyPage() {
+  if (reservationStore.hasNextPage) {
+    loadMyReservations(reservationStore.page + 1)
+  }
+}
+
+const myPagination = computed(() => ({
+  page: reservationStore.page,
+  pageSize: reservationStore.pageSize,
+  total: reservationStore.count,
+}))
 
 function toggleResource(resourceId) {
   const next = new Set(expandedResources.value)
@@ -171,6 +193,7 @@ async function loadSchedules() {
 }
 
 async function loadInitialData() {
+  if (!authStore.isAuthenticated) return
   if (!resourceStore.resources.length) {
     await resourceStore.fetchResources({ page_size: 100 })
   }
@@ -298,10 +321,17 @@ onIonViewWillEnter(loadInitialData)
             </div>
           </div>
 
-          <ReservationDateRange :start-time="reservation.start_time" :end-time="reservation.end_time" size="md" />
+          <ReservationDateRange class="reservation-date-range" :start-time="reservation.start_time"
+            :end-time="reservation.end_time" size="md" />
 
           <span class="reservation-price">{{ reservation.total_price }} €</span>
         </article>
+      </div>
+
+      <div v-if="reservationStore.count > reservationStore.pageSize" class="card pagination-card">
+        <DataTablePagination :pagination="myPagination" :loading="reservationStore.loading"
+          :items-length="reservationStore.reservations.length" @prev-page="onPrevMyPage"
+          @next-page="onNextMyPage" />
       </div>
     </section>
   </ion-content>
@@ -469,24 +499,6 @@ onIonViewWillEnter(loadInitialData)
   font-size: 0.9rem;
 }
 
-.btn-text {
-  display: flex;
-  justify-content: center;
-  background: transparent;
-  color: var(--primary);
-  font-weight: 600;
-  padding: var(--space-2) 0;
-  text-align: left;
-  opacity: 0.75;
-  border-radius: 10px;
-  background-color: var(--outline-variant);
-  transition: ease 0.2s;
-}
-
-.btn-text:hover {
-  opacity: 1;
-}
-
 .resource-closed {
   display: flex;
   justify-content: flex-start;
@@ -545,6 +557,9 @@ onIonViewWillEnter(loadInitialData)
 .reservation-price {
   font-size: 1.15rem;
   font-weight: 700;
+  min-width: 150px;
+  text-align: center;
+  flex-shrink: 0;
   color: var(--primary);
 }
 
@@ -592,5 +607,10 @@ onIonViewWillEnter(loadInitialData)
   font-weight: 600;
   color: var(--primary);
   background: rgba(0, 108, 79, 0.08);
+}
+
+.pagination-card {
+  margin-top: var(--space-4);
+  padding: var(--space-2) var(--space-3);
 }
 </style>

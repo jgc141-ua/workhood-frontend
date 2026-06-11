@@ -1,7 +1,8 @@
 import { createRouter, createWebHistory } from '@ionic/vue-router'
 import MainLayout from '../layouts/MainLayout.vue'
-import DashboardView from '../views/DashboardView.vue'
+import DashboardRouter from '../views/DashboardRouter.vue'
 import BookingsRouter from '../views/BookingsRouter.vue'
+import AccessesAdminView from '../views/AccessesView.vue'
 import MembersView from '../views/MembersView.vue'
 import ReportsView from '../views/ReportsView.vue'
 import PublicLayout from '../layouts/PublicLayout.vue'
@@ -20,13 +21,19 @@ const router = createRouter({
       path: '/',
       meta: { requiresAuth: true },
       component: MainLayout,
-      children: [{ path: '', name: 'dashboard', component: DashboardView }],
+      children: [{ path: '', name: 'dashboard', component: DashboardRouter }],
     },
     {
       path: '/bookings',
       meta: { requiresAuth: true },
       component: MainLayout,
       children: [{ path: '', name: 'bookings', component: BookingsRouter }],
+    },
+    {
+      path: '/accesses',
+      meta: { requiresAuth: true, requiresRole: 'ADMIN' },
+      component: MainLayout,
+      children: [{ path: '', name: 'accesses', component: AccessesAdminView }],
     },
     {
       path: '/members',

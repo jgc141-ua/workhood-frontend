@@ -69,6 +69,74 @@ export const useAccessStore = defineStore('accesses', () => {
     }
   }
 
+  async function fetchLogs(params = {}) {
+    loading.value = true
+    error.value = null
+    try {
+      const query = new URLSearchParams()
+
+      const currentPage = params.page ?? page.value
+      const currentPageSize = params.pageSize ?? pageSize.value
+
+      query.set('page', currentPage)
+      query.set('page_size', currentPageSize)
+
+      if (params.type) query.set('type', params.type)
+      if (params.result) query.set('result', params.result)
+      if (params.email) query.set('email', params.email)
+
+      const response = await apiFetch(`${ENDPOINTS.accessLogs}?${query.toString()}`, {}, tokenStore)
+      await checkResponse(response, 'Error al cargar los registros de acceso')
+
+      const data = await response.json()
+      logs.value = data.results || []
+      count.value = data.count || 0
+      page.value = currentPage
+      pageSize.value = currentPageSize
+
+      return data
+    } catch (err) {
+      error.value = err.message || 'Error al cargar los registros de acceso'
+      throw err
+    } finally {
+      loading.value = false
+    }
+  }
+
+  async function fetchMyLogs(params = {}) {
+    loading.value = true
+    error.value = null
+    try {
+      const query = new URLSearchParams()
+
+      const currentPage = params.page ?? page.value
+      const currentPageSize = params.pageSize ?? pageSize.value
+
+      query.set('page', currentPage)
+      query.set('page_size', currentPageSize)
+
+      const response = await apiFetch(
+        `${ENDPOINTS.accessMyLogs}?${query.toString()}`,
+        {},
+        tokenStore,
+      )
+      await checkResponse(response, 'Error al cargar tus registros de acceso')
+
+      const data = await response.json()
+      myLogs.value = data.results || []
+      myCount.value = data.count || 0
+      page.value = currentPage
+      pageSize.value = currentPageSize
+
+      return data
+    } catch (err) {
+      error.value = err.message || 'Error al cargar tus registros de acceso'
+      throw err
+    } finally {
+      loading.value = false
+    }
+  }
+
   return {
     logs,
     myLogs,
@@ -81,5 +149,7 @@ export const useAccessStore = defineStore('accesses', () => {
     lastAccess,
     checkIn,
     checkOut,
+    fetchLogs,
+    fetchMyLogs,
   }
 })

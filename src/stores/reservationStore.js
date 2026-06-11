@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { ENDPOINTS } from '@/config/api'
 import { useTokenStore } from './tokenStore'
 import { apiFetch } from '@/composables/apiClient'
@@ -8,14 +8,28 @@ import { checkResponse } from '@/composables/checkResponse'
 export const useReservationStore = defineStore('reservations', () => {
   // State
   const reservations = ref([])
+  const count = ref(0)
+  const next = ref(null)
+  const previous = ref(null)
+  const page = ref(1)
+  const pageSize = ref(5)
+
+  const recentReservations = ref([])
+
   const allReservations = ref([])
   const allCount = ref(0)
   const allPage = ref(1)
   const allPageSize = ref(10)
   const allNext = ref(null)
   const allPrevious = ref(null)
+
   const loading = ref(false)
   const error = ref(null)
+
+  // Getters
+  const totalPages = computed(() => Math.max(1, Math.ceil(count.value / pageSize.value)))
+  const hasNextPage = computed(() => !!next.value)
+  const hasPreviousPage = computed(() => !!previous.value)
 
   // Modal de cancelación compartido entre vistas
   const isCancelModalOpen = ref(false)
@@ -23,14 +37,14 @@ export const useReservationStore = defineStore('reservations', () => {
 
   const tokenStore = useTokenStore()
 
-  function buildQuery(params = {}) {
-    const query = new URLSearchParams()
+  async function setMyPage(newPage) {
+    if (newPage < 1 || newPage > totalPages.value) return
+    await fetchMyReservations({ page: newPage })
+  }
 
-    if (params.state) query.set('state', params.state)
-    if (params.resource_type) query.set('resource_type', params.resource_type)
-    if (params.upcoming != null) query.set('upcoming', params.upcoming)
-
-    return query.toString()
+  async function setMyPageSize(newPageSize) {
+    pageSize.value = newPageSize
+    await fetchMyReservations({ page: 1 })
   }
 
   // Actions
@@ -38,12 +52,27 @@ export const useReservationStore = defineStore('reservations', () => {
     loading.value = true
     error.value = null
     try {
-      const query = buildQuery(params)
-      const response = await apiFetch(`${ENDPOINTS.myReservations}?${query}`, {}, tokenStore)
+      const currentPage = params.page ?? page.value
+      const currentPageSize = params.page_size ?? pageSize.value
+
+      const query = new URLSearchParams()
+      query.set('page', currentPage)
+      query.set('page_size', currentPageSize)
+
+      if (params.state) query.set('state', params.state)
+      if (params.resource_type) query.set('resource_type', params.resource_type)
+      if (params.upcoming != null) query.set('upcoming', params.upcoming)
+
+      const response = await apiFetch(`${ENDPOINTS.myReservations}?${query.toString()}`, {}, tokenStore)
       await checkResponse(response, 'Error al cargar tus reservas')
 
       const data = await response.json()
-      reservations.value = Array.isArray(data) ? data : data.results || []
+      reservations.value = data.results || []
+      count.value = data.count || 0
+      next.value = data.next
+      previous.value = data.previous
+      page.value = currentPage
+      pageSize.value = currentPageSize
 
       return data
     } catch (err) {
@@ -51,6 +80,24 @@ export const useReservationStore = defineStore('reservations', () => {
       throw err
     } finally {
       loading.value = false
+    }
+  }
+
+  async function fetchRecentReservations(limit = 2) {
+    try {
+      const response = await apiFetch(
+        `${ENDPOINTS.myReservations}?page_size=${limit}&today=true`,
+        {},
+        tokenStore,
+      )
+      await checkResponse(response, 'Error al cargar tus reservas recientes')
+
+      const data = await response.json()
+      recentReservations.value = data.results || []
+      return recentReservations.value
+    } catch (err) {
+      error.value = err.message || 'Error al cargar tus reservas recientes'
+      throw err
     }
   }
 
@@ -216,6 +263,15 @@ export const useReservationStore = defineStore('reservations', () => {
 
   return {
     reservations,
+    recentReservations,
+    count,
+    next,
+    previous,
+    page,
+    pageSize,
+    totalPages,
+    hasNextPage,
+    hasPreviousPage,
     allReservations,
     allCount,
     allPage,
@@ -227,7 +283,10 @@ export const useReservationStore = defineStore('reservations', () => {
     isCancelModalOpen,
     reservationToCancel,
     fetchMyReservations,
+    fetchRecentReservations,
     fetchAllReservations,
+    setMyPage,
+    setMyPageSize,
     createReservation,
     cancelReservation,
     openCancelModal,

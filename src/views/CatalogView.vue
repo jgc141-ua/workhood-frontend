@@ -11,9 +11,11 @@ import { useMembershipTypeStore } from '@/stores/membershipTypeStore'
 import { useBenefitStore } from '@/stores/benefitStore'
 import { useResourceTypeStore } from '@/stores/resourceTypeStore'
 import { useResourceStore } from '@/stores/resourceStore'
+import { useAuthStore } from '@/stores/authStore'
 
 // Stores de catálogo
 const membershipTypeStore = useMembershipTypeStore()
+const authStore = useAuthStore()
 const benefitStore = useBenefitStore()
 const resourceTypeStore = useResourceTypeStore()
 const resourceStore = useResourceStore()
@@ -58,6 +60,8 @@ function addResource() {
 
 // Carga inicial de los cuatro catálogos
 onMounted(async () => {
+  if (!authStore.isAuthenticated) return
+
   const promises = []
 
   if (!membershipTypeStore.membershipTypes.length) {

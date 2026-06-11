@@ -20,6 +20,8 @@ import IconProfileFilled from '@/assets/icons/IconProfileFilled.vue'
 import { ref, computed, inject } from 'vue'
 import IconCatalog from '../assets/icons/IconCatalog.vue'
 import IconCatalogFilled from '../assets/icons/IconCatalogFilled.vue'
+import IconAccess from '@/assets/icons/IconAccess.vue'
+import IconAccessFilled from '@/assets/icons/IconAccessFilled.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -60,6 +62,7 @@ const items = computed(() => {
     baseItems.splice(2, 0,
       { label: 'Miembros', to: '/members', icon: IconMembers, iconFilled: IconMembersFilled },
       { label: 'Catálogo', to: '/catalog', icon: IconCatalog, iconFilled: IconCatalogFilled },
+      { label: 'Accesos', to: '/accesses', icon: IconAccess, iconFilled: IconAccessFilled },
       { label: 'Reportes', to: '/reports', icon: IconReport, iconFilled: IconReportFilled }
     )
   }

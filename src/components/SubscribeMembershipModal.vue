@@ -6,6 +6,7 @@ import PrettyCheckbox from '@/components/PrettyCheckbox.vue'
 import FormActions from '@/components/forms/FormActions.vue'
 import { useMembershipTypeStore } from '@/stores/membershipTypeStore'
 import { useMembershipStore } from '@/stores/membershipStore'
+import { useAuthStore } from '@/stores/authStore'
 
 const props = defineProps({
   show: {
@@ -22,6 +23,7 @@ const emit = defineEmits(['close', 'subscribed'])
 
 const membershipTypeStore = useMembershipTypeStore()
 const membershipStore = useMembershipStore()
+const authStore = useAuthStore()
 
 const isOperatorMode = computed(() => !!props.memberEmail)
 
@@ -80,6 +82,7 @@ watch(selectedMembershipTypeId, async (id) => {
 })
 
 onMounted(() => {
+  if (!authStore.isAuthenticated) return
   if (!membershipTypeStore.allMembershipTypes.length) {
     membershipTypeStore.fetchMembershipTypes().catch(() => { })
   }

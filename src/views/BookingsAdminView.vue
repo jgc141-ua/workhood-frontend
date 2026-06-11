@@ -9,9 +9,11 @@ import ReservationFilters from '@/components/ReservationFilters.vue'
 import ReservationDateRange from '@/components/ReservationDateRange.vue'
 import IconTrash from '@/assets/icons/IconTrash.vue'
 import { useReservationStore } from '@/stores/reservationStore'
+import { useAuthStore } from '@/stores/authStore'
 import { showToast } from '@/composables/toast'
 
 const reservationStore = useReservationStore()
+const authStore = useAuthStore()
 
 const selectedState = ref('all')
 const selectedTime = ref('upcoming')
@@ -100,6 +102,7 @@ watch([selectedState, selectedTime], () => {
 })
 
 onMounted(() => {
+  if (!authStore.isAuthenticated) return
   loadReservations()
 })
 </script>

@@ -2,10 +2,6 @@
 import DataTablePagination from './DataTablePagination.vue'
 
 const props = defineProps({
-  columns: {
-    type: Array,
-    required: true,
-  },
   items: {
     type: Array,
     default: () => [],
@@ -41,7 +37,6 @@ function getItemKey(item, index) {
   }
   return index
 }
-
 </script>
 
 <template>
@@ -61,13 +56,7 @@ function getItemKey(item, index) {
     <div class="table-scroll-area">
       <div class="data-table-list">
         <div v-for="(item, index) in items" :key="getItemKey(item, index)" class="data-table-list-item">
-          <slot name="row" :item="item" :index="index">
-            <div v-for="col in columns" :key="col.key">
-              <slot :name="`cell-${col.key}`" :item="item" :index="index">
-                {{ item[col.key] }}
-              </slot>
-            </div>
-          </slot>
+          <slot name="row" :item="item" :index="index" />
         </div>
       </div>
     </div>
