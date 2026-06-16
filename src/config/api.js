@@ -67,4 +67,10 @@ export const ENDPOINTS = {
   accessCheckOut: BASE + '/accesses/check-out/',
   accessLogs: BASE + '/accesses/logs/',
   accessMyLogs: BASE + '/accesses/my-logs/',
+
+  // PaymentMethods
+  paymentMethods: BASE + '/payment-methods/all/',
+  paymentMethodCreate: BASE + '/payment-methods/create/',
+  paymentMethodUpdate: BASE + '/payment-methods/update/',
+  paymentMethodDelete: BASE + '/payment-methods/delete/',
 }

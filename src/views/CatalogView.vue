@@ -7,10 +7,12 @@ import MembershipTypesSection from '@/components/sections/MembershipTypesSection
 import BenefitsSection from '@/components/sections/BenefitsSection.vue'
 import ResourceTypesSection from '@/components/sections/ResourceTypesSection.vue'
 import ResourcesSection from '@/components/sections/ResourcesSection.vue'
+import PaymentMethodsSection from '@/components/sections/PaymentMethodsSection.vue'
 import { useMembershipTypeStore } from '@/stores/membershipTypeStore'
 import { useBenefitStore } from '@/stores/benefitStore'
 import { useResourceTypeStore } from '@/stores/resourceTypeStore'
 import { useResourceStore } from '@/stores/resourceStore'
+import { usePaymentMethodStore } from '@/stores/paymentMethodStore'
 import { useAuthStore } from '@/stores/authStore'
 
 // Stores de catálogo
@@ -19,12 +21,14 @@ const authStore = useAuthStore()
 const benefitStore = useBenefitStore()
 const resourceTypeStore = useResourceTypeStore()
 const resourceStore = useResourceStore()
+const paymentMethodStore = usePaymentMethodStore()
 
 // Estado de apertura de los modales de creación de cada sección
 const isCreateMembershipOpen = ref(false)
 const isCreateBenefitOpen = ref(false)
 const isCreateResourceTypeOpen = ref(false)
 const isCreateResourceOpen = ref(false)
+const isCreatePaymentMethodOpen = ref(false)
 
 // Modal menú añadir
 const isAddMenuModalOpen = ref(false)
@@ -58,6 +62,11 @@ function addResource() {
   isCreateResourceOpen.value = true
 }
 
+function addPaymentMethod() {
+  closeAddMenuModal()
+  isCreatePaymentMethodOpen.value = true
+}
+
 // Carga inicial de los cuatro catálogos
 onMounted(async () => {
   if (!authStore.isAuthenticated) return
@@ -65,16 +74,19 @@ onMounted(async () => {
   const promises = []
 
   if (!membershipTypeStore.membershipTypes.length) {
-    promises.push(membershipTypeStore.fetchMembershipTypes().catch(() => {}))
+    promises.push(membershipTypeStore.fetchMembershipTypes().catch(() => { }))
   }
   if (!benefitStore.benefits.length) {
-    promises.push(benefitStore.fetchBenefits().catch(() => {}))
+    promises.push(benefitStore.fetchBenefits().catch(() => { }))
   }
   if (!resourceTypeStore.resourceTypes.length) {
-    promises.push(resourceTypeStore.fetchResourceTypes().catch(() => {}))
+    promises.push(resourceTypeStore.fetchResourceTypes().catch(() => { }))
   }
   if (!resourceStore.resources.length) {
-    promises.push(resourceStore.fetchResources().catch(() => {}))
+    promises.push(resourceStore.fetchResources().catch(() => { }))
+  }
+  if (!paymentMethodStore.allPaymentMethods.length) {
+    promises.push(paymentMethodStore.fetchPaymentMethods().catch(() => { }))
   }
 
   await Promise.all(promises)
@@ -89,8 +101,8 @@ onMounted(async () => {
       <!-- Encabezado y acción principal -->
       <header class="row-between">
         <div class="page-header">
-          <p class="eyebrow">ADMINISTRACIÓN DE RECURSOS Y MEMBRESÍAS</p>
-          <h1 class="title">Membresías, beneficios y recursos</h1>
+          <p class="eyebrow">ADMINISTRACIÓN DE RECURSOS Y PAGOS</p>
+          <h1 class="title">Catálogo y métodos de pago</h1>
         </div>
 
         <button class="btn btn-primary top-action" type="button" @click="openAddMenuModal">
@@ -113,19 +125,31 @@ onMounted(async () => {
           <button class="btn btn-secondary top-action" type="button" @click="addResource">
             <span>Crear un recurso nuevo</span>
           </button>
+          <button class="btn btn-secondary top-action" type="button" @click="addPaymentMethod">
+            <span>Crear un método de pago nuevo</span>
+          </button>
         </div>
       </AppModal>
 
       <!-- Secciones de membresías y beneficios -->
       <section class="contentGrid">
-        <MembershipTypesSection :is-create-open="isCreateMembershipOpen" @update:is-create-open="isCreateMembershipOpen = $event" />
+        <MembershipTypesSection :is-create-open="isCreateMembershipOpen"
+          @update:is-create-open="isCreateMembershipOpen = $event" />
         <BenefitsSection :is-create-open="isCreateBenefitOpen" @update:is-create-open="isCreateBenefitOpen = $event" />
       </section>
 
       <!-- Secciones de recursos y tipos de recurso -->
       <section class="contentGrid resources-grid">
-        <ResourcesSection :is-create-open="isCreateResourceOpen" @update:is-create-open="isCreateResourceOpen = $event" />
-        <ResourceTypesSection :is-create-open="isCreateResourceTypeOpen" @update:is-create-open="isCreateResourceTypeOpen = $event" />
+        <ResourcesSection :is-create-open="isCreateResourceOpen"
+          @update:is-create-open="isCreateResourceOpen = $event" />
+        <ResourceTypesSection :is-create-open="isCreateResourceTypeOpen"
+          @update:is-create-open="isCreateResourceTypeOpen = $event" />
+      </section>
+
+      <!-- Sección de métodos de pago -->
+      <section class="contentGrid resources-grid">
+        <PaymentMethodsSection :is-create-open="isCreatePaymentMethodOpen"
+          @update:is-create-open="isCreatePaymentMethodOpen = $event" />
       </section>
 
     </ion-content>
@@ -149,7 +173,7 @@ onMounted(async () => {
   align-items: start;
 }
 
-.contentGrid > * {
+.contentGrid>* {
   min-width: 0;
 }
 
@@ -163,5 +187,4 @@ onMounted(async () => {
     grid-template-columns: 1fr;
   }
 }
-
 </style>

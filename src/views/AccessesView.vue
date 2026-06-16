@@ -1,7 +1,7 @@
 <script setup>
 import { onMounted, ref, watch } from 'vue'
 
-import { IonContent } from '@ionic/vue'
+import { IonPage, IonContent } from '@ionic/vue'
 import { computed } from 'vue'
 import MobileHeader from '@/components/MobileHeader.vue'
 import PrettyInputSelector from '@/components/PrettyInputSelector.vue'
@@ -43,7 +43,7 @@ async function loadLogs(page = 1) {
       email: selectedEmail.value || undefined,
     })
   } catch (err) {
-    showToast(err.message || 'Error al cargar los registros de acceso')
+    //showToast(err.message || 'Error al cargar los registros de acceso')
   }
 }
 
@@ -73,51 +73,53 @@ onMounted(() => {
 </script>
 
 <template>
-  <MobileHeader title="Accesos" />
-  <ion-content :fullscreen="true" class="ion-padding">
-    <section class="accesses-admin">
-      <header class="page-header">
-        <div>
-          <p class="eyebrow">GESTIÓN DE ACCESOS</p>
-          <h1 class="title">Registros de acceso</h1>
-        </div>
-      </header>
-
-      <div class="access-filters">
-        <PrettyInputSelector v-model="selectedType" :options="typeOptions" class="access-filter-selector" />
-        <PrettyInputSelector v-model="selectedResult" :options="resultOptions" class="access-filter-selector" />
-        <input v-model="selectedEmail" type="text" class="access-filter access-filter-email"
-          placeholder="Filtrar por email" />
-      </div>
-
-      <div v-if="accessStore.loading" class="server-state">Cargando registros...</div>
-      <div v-else-if="!accessStore.logs.length" class="server-state">
-        No hay registros de acceso.
-      </div>
-
-      <div v-else class="access-list">
-        <article v-for="access in accessStore.logs" :key="access.id" class="card access-card">
-          <div class="access-info">
-            <span class="access-type">{{ access.type === 'ENTRADA' ? 'Entrada' : 'Salida' }}</span>
-            <span class="access-result" :class="access.result.toLowerCase()">
-              {{ access.result === 'PERMITIDO' ? 'Permitido' : 'Denegado' }}
-            </span>
+  <ion-page>
+    <MobileHeader title="Accesos" />
+    <ion-content :fullscreen="true" class="ion-padding">
+      <section class="accesses-admin">
+        <header class="page-header">
+          <div>
+            <p class="eyebrow">GESTIÓN DE ACCESOS</p>
+            <h1 class="title">Registros de acceso</h1>
           </div>
-          <p class="access-user">{{ access.user_name }} ({{ access.user_email }})</p>
-          <p v-if="access.membership" class="access-membership">
-            {{ access.membership.membership_type_name }}
-            <span v-if="access.membership.resource_name">— {{ access.membership.resource_name }}</span>
-          </p>
-          <p class="access-date">{{ access.event ? new Date(access.event).toLocaleString('es-ES') : '-' }}</p>
-        </article>
-      </div>
+        </header>
 
-      <div v-if="accessStore.logs.length" class="card access-pagination-card">
-        <DataTablePagination :pagination="pagination" :loading="accessStore.loading"
-          :items-length="accessStore.logs.length" @prev-page="prevPage" @next-page="nextPage" />
-      </div>
-    </section>
-  </ion-content>
+        <div class="access-filters">
+          <PrettyInputSelector v-model="selectedType" :options="typeOptions" class="access-filter-selector" />
+          <PrettyInputSelector v-model="selectedResult" :options="resultOptions" class="access-filter-selector" />
+          <input v-model="selectedEmail" type="text" class="access-filter access-filter-email"
+            placeholder="Filtrar por email" />
+        </div>
+
+        <div v-if="accessStore.loading" class="server-state">Cargando registros...</div>
+        <div v-else-if="!accessStore.logs.length" class="server-state">
+          No hay registros de acceso.
+        </div>
+
+        <div v-else class="access-list">
+          <article v-for="access in accessStore.logs" :key="access.id" class="card access-card">
+            <div class="access-info">
+              <span class="access-type">{{ access.type === 'ENTRADA' ? 'Entrada' : 'Salida' }}</span>
+              <span class="access-result" :class="access.result.toLowerCase()">
+                {{ access.result === 'PERMITIDO' ? 'Permitido' : 'Denegado' }}
+              </span>
+            </div>
+            <p class="access-user">{{ access.user_name }} ({{ access.user_email }})</p>
+            <p v-if="access.membership" class="access-membership">
+              {{ access.membership.membership_type_name }}
+              <span v-if="access.membership.resource_name">— {{ access.membership.resource_name }}</span>
+            </p>
+            <p class="access-date">{{ access.event ? new Date(access.event).toLocaleString('es-ES') : '-' }}</p>
+          </article>
+        </div>
+
+        <div v-if="accessStore.logs.length" class="card access-pagination-card">
+          <DataTablePagination :pagination="pagination" :loading="accessStore.loading"
+            :items-length="accessStore.logs.length" @prev-page="prevPage" @next-page="nextPage" />
+        </div>
+      </section>
+    </ion-content>
+  </ion-page>
 </template>
 
 <style scoped>
