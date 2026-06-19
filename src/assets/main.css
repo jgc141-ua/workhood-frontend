@@ -153,6 +153,18 @@ ion-content.ion-padding {
   padding: 0.95rem 1.15rem;
 }
 
+.page-admin {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.filters {
+  display: flex;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
 .btn-text {
   display: flex;
   justify-content: center;

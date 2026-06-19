@@ -137,7 +137,8 @@ const brand = inject('BRAND')
             <h3>No tienes una membresía activa</h3>
             <p>Suscríbete ahora para poder acceder a los recursos del espacio.</p>
           </div>
-          <ion-button class="btn-primary pill-subscribe" type="button" @click="openSubscribeModal">
+          <ion-button class="btn-primary pill-subscribe" style="max-width: 200px;" type="button"
+            @click="openSubscribeModal">
             Suscribirme
           </ion-button>
         </div>
@@ -166,10 +167,10 @@ const brand = inject('BRAND')
       </section>
 
       <section class="dashboard-columns">
-        <!-- Últimas reservas -->
+        <!-- Tus próximas reservas -->
         <div class="dashboard-column">
           <h3 class="header-title">Tus próximas reservas</h3>
-          <article class="card panel reservation-panel">
+          <article>
             <div v-if="reservationStore.loading" class="server-state">Cargando...</div>
             <div v-else-if="!reservationStore.recentReservations.length" class="server-state">
               No tienes reservas.
@@ -305,10 +306,6 @@ const brand = inject('BRAND')
   margin: 0;
   font-size: 1.1rem;
   color: var(--primary);
-}
-
-.reservation-panel {
-  padding: var(--space-4);
 }
 
 .reservations-list {

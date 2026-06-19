@@ -7,6 +7,8 @@ import IconDashboard from '@/assets/icons/IconDashboard.vue'
 import IconDashboardFilled from '@/assets/icons/IconDashboardFilled.vue'
 import IconBookings from '@/assets/icons/IconBookings.vue'
 import IconBookingsFilled from '@/assets/icons/IconBookingsFilled.vue'
+import IconInvoice from '@/assets/icons/IconInvoice.vue'
+import IconInvoiceFilled from '@/assets/icons/IconInvoiceFilled.vue'
 import IconMembers from '@/assets/icons/IconMembers.vue'
 import IconMembersFilled from '@/assets/icons/IconMembersFilled.vue'
 import IconReport from '@/assets/icons/IconReport.vue'
@@ -55,6 +57,7 @@ const items = computed(() => {
   const baseItems = [
     { label: 'Panel principal', to: '/', icon: IconDashboard, iconFilled: IconDashboardFilled },
     { label: 'Reservas', to: '/bookings', icon: IconBookings, iconFilled: IconBookingsFilled },
+    { label: 'Facturas', to: '/invoices', icon: IconInvoice, iconFilled: IconInvoiceFilled },
     { label: 'Mi perfil', to: '/me', icon: IconProfile, iconFilled: IconProfileFilled },
   ]
 

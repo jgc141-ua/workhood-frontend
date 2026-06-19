@@ -73,4 +73,11 @@ export const ENDPOINTS = {
   paymentMethodCreate: BASE + '/payment-methods/create/',
   paymentMethodUpdate: BASE + '/payment-methods/update/',
   paymentMethodDelete: BASE + '/payment-methods/delete/',
+
+  // Invoices
+  myInvoices: BASE + '/invoices/my/',
+  myInvoiceDetail: BASE + '/invoices/my-detail/',
+  allInvoices: BASE + '/invoices/all/',
+  adminInvoiceDetail: BASE + '/invoices/invoice-detail/',
+  invoiceIssue: BASE + '/invoices/issue/',
 }

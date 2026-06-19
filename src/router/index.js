@@ -13,6 +13,7 @@ import MyProfileView from '../views/MyProfileView.vue'
 import { useAuthStore } from '@/stores/authStore.js'
 import { useMeStore } from '@/stores/meStore.js'
 import CatalogView from '@/views/CatalogView.vue'
+import InvoicesRouter from '@/views/InvoicesRouter.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -58,6 +59,12 @@ const router = createRouter({
       meta: { requiresAuth: true, requiresRole: 'ADMIN' },
       component: MainLayout,
       children: [{ path: '', name: 'catalog', component: CatalogView }],
+    },
+    {
+      path: '/invoices',
+      meta: { requiresAuth: true },
+      component: MainLayout,
+      children: [{ path: '', name: 'invoices', component: InvoicesRouter }],
     },
     {
       path: '/login',

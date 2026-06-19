@@ -76,7 +76,7 @@ onMounted(() => {
   <ion-page>
     <MobileHeader title="Accesos" />
     <ion-content :fullscreen="true" class="ion-padding">
-      <section class="accesses-admin">
+      <section class="page-admin">
         <header class="page-header">
           <div>
             <p class="eyebrow">GESTIÓN DE ACCESOS</p>
@@ -84,7 +84,7 @@ onMounted(() => {
           </div>
         </header>
 
-        <div class="access-filters">
+        <div class="filters">
           <PrettyInputSelector v-model="selectedType" :options="typeOptions" class="access-filter-selector" />
           <PrettyInputSelector v-model="selectedResult" :options="resultOptions" class="access-filter-selector" />
           <input v-model="selectedEmail" type="text" class="access-filter access-filter-email"
@@ -123,18 +123,6 @@ onMounted(() => {
 </template>
 
 <style scoped>
-.accesses-admin {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-6);
-}
-
-.access-filters {
-  display: flex;
-  gap: var(--space-3);
-  flex-wrap: wrap;
-}
-
 .access-filter-selector {
   min-width: 220px;
 }

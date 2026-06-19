@@ -1,20 +1,24 @@
 <script setup>
 import { ref, computed, inject, onMounted, watch } from 'vue'
-import { IonPage, IonContent } from '@ionic/vue'
+import { IonPage, IonContent, onIonViewWillEnter } from '@ionic/vue'
 import { useMembersStore } from '@/stores/memberStore'
 
 import MobileHeader from '@/components/MobileHeader.vue'
 import IconEdit from '@/assets/icons/IconEdit.vue'
 import IconSearch from '@/assets/icons/IconSearch.vue'
 import IconMembers from '@/assets/icons/IconMembers.vue'
+import IconInvoice from '@/assets/icons/IconInvoice.vue'
 import AppModal from '@/components/AppModal.vue'
 import ConfirmModal from '@/components/ConfirmModal.vue'
 import RegisterForm from '@/components/forms/RegisterForm.vue'
 import EditMemberForm from '@/components/forms/EditMemberForm.vue'
 import SubscribeMembershipModal from '@/components/SubscribeMembershipModal.vue'
 import DataTableColumns from '@/components/DataTableColumns.vue'
+import FormInput from '@/components/forms/FormInput.vue'
+import FormActions from '@/components/forms/FormActions.vue'
 import { useAuthStore } from '@/stores/authStore'
 import { useMembershipStore } from '@/stores/membershipStore'
+import { useInvoiceStore } from '@/stores/invoiceStore'
 import { showToast } from '@/composables/toast'
 import MoreActionsButton from '@/components/MoreActionsButton.vue'
 import IconTrash from '@/assets/icons/IconTrash.vue'
@@ -26,6 +30,7 @@ const brand = inject('BRAND')
 const auth = useAuthStore()
 const membersStore = useMembersStore()
 const membershipStore = useMembershipStore()
+const invoiceStore = useInvoiceStore()
 
 // Modal añadir miembro
 const isAddMemberModalOpen = ref(false)
@@ -174,6 +179,58 @@ async function handleDeleteMember() {
   closeDeleteMemberModal()
 }
 
+// Modal generar factura
+const isIssueInvoiceModalOpen = ref(false)
+const memberToInvoice = ref(null)
+const invoiceForm = ref({
+  concept: '',
+  amount: '',
+  iva_rate: '',
+})
+
+function openIssueInvoiceModal(member) {
+  memberToInvoice.value = member
+  invoiceForm.value = {
+    concept: '',
+    amount: '',
+    iva_rate: '',
+  }
+  isIssueInvoiceModalOpen.value = true
+}
+
+function closeIssueInvoiceModal() {
+  isIssueInvoiceModalOpen.value = false
+}
+
+function onIssueInvoiceModalClosed() {
+  memberToInvoice.value = null
+  invoiceForm.value = { concept: '', amount: '', iva_rate: '' }
+}
+
+async function handleIssueInvoice() {
+  if (!memberToInvoice.value) return
+  if (!invoiceForm.value.concept || !invoiceForm.value.amount) {
+    showToast('Concepto e importe son obligatorios')
+    return
+  }
+
+  const payload = {
+    concept: invoiceForm.value.concept,
+    amount: Number(invoiceForm.value.amount),
+  }
+  if (invoiceForm.value.iva_rate !== '') {
+    payload.iva_rate = Number(invoiceForm.value.iva_rate)
+  }
+
+  try {
+    await invoiceStore.issueInvoice(memberToInvoice.value.email, payload)
+    showToast('Factura generada correctamente', 'success')
+    closeIssueInvoiceModal()
+  } catch (err) {
+    showToast(err.message || 'Error al generar la factura')
+  }
+}
+
 // Búsqueda con debounce
 const searchInput = ref('')
 let debounceTimer = null
@@ -252,6 +309,8 @@ function handleMemberAction(member, option) {
     openSubscribeMemberModal(member)
   } else if (option.action === 'cancel-membership') {
     openCancelMembershipModal(member)
+  } else if (option.action === 'issue-invoice') {
+    openIssueInvoiceModal(member)
   }
 }
 
@@ -265,21 +324,20 @@ function memberActionOptions(member) {
   }
 
   options.push(
+    { icon: IconInvoice, label: 'Generar factura', action: 'issue-invoice', danger: false },
     { icon: IconTrash, label: 'Eliminar', action: 'delete', danger: true },
   )
 
   return options
 }
 
-// Carga inicial
+// Carga inicial y recarga al entrar a la vista
 onMounted(async () => {
-  if (membersStore.members.length) return
+  await membersStore.fetchMembers().catch(() => {})
+})
 
-  try {
-    await membersStore.fetchMembers()
-  } catch (err) {
-    // Los stores ya registran el error
-  }
+onIonViewWillEnter(async () => {
+  await membersStore.fetchMembers().catch(() => {})
 })
 </script>
 
@@ -335,6 +393,24 @@ onMounted(async () => {
           :item-name="memberToCancel?.email" confirm-label="Cancelar ahora" confirm-danger
           @confirm="handleCancelMembership" @close="closeCancelMembershipModal"
           @after-close="onCancelMembershipModalClosed" />
+
+        <!-- Modal: generar factura -->
+        <AppModal :show="isIssueInvoiceModalOpen" title="Generar factura"
+          @close="closeIssueInvoiceModal" @after-close="onIssueInvoiceModalClosed">
+          <form class="invoice-issue-form" @submit.prevent="handleIssueInvoice">
+            <p class="invoice-issue-hint">
+              Generar factura a: <strong>{{ memberToInvoice?.email }}</strong>
+            </p>
+            <FormInput v-model="invoiceForm.concept" label="Concepto" placeholder="Ej: Membresía Flex - junio 2026"
+              required />
+            <FormInput v-model="invoiceForm.amount" label="Importe (€)" type="number" step="0.01" min="0"
+              placeholder="Ej: 50.00" required />
+            <FormInput v-model="invoiceForm.iva_rate" label="IVA (opcional, ej: 0.21 para 21%)" type="number"
+              step="0.01" min="0" max="1" placeholder="0.21 (por defecto)" />
+            <FormActions submit-label="Generar" :disabled="invoiceStore.loading"
+              :loading="invoiceStore.loading" @cancel="closeIssueInvoiceModal" />
+          </form>
+        </AppModal>
 
         <!-- Barra de filtros y búsqueda -->
         <section class="members-bar">
@@ -573,6 +649,18 @@ onMounted(async () => {
   .members-tab {
     padding: 0.68rem 0.9rem;
   }
+}
+
+/* Modal generar factura */
+.invoice-issue-form {
+  display: flex;
+  flex-direction: column;
+}
+
+.invoice-issue-hint {
+  margin: 0 0 var(--space-3);
+  font-size: 0.9rem;
+  color: #6b7280;
 }
 
 </style>
