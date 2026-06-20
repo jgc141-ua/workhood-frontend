@@ -134,8 +134,13 @@ defineExpose({
           <h4 class="payment-methods-name text-truncate" :title="item.name">{{ item.name }}</h4>
         </div>
         <div class="payment-methods-more-actions">
-          <div class="pill-button" :class="item.is_active ? 'pill-button-success' : 'pill-button-warn'">
-            {{ item.is_active ? 'Activo' : 'Inactivo' }}
+          <div class="payment-methods-badges">
+            <div class="pill-button" :class="item.is_active ? 'pill-button-success' : 'pill-button-warn'">
+              {{ item.is_active ? 'Activo' : 'Inactivo' }}
+            </div>
+            <div class="pill-button" :class="item.member_visible ? 'pill-button-success' : 'pill-button-warn'">
+              {{ item.member_visible ? 'Visible' : 'Oculto' }}
+            </div>
           </div>
           <MoreActionsButton :options="moreActionsOpts" @select="(opt) => handleAction(item, opt)" />
         </div>
@@ -180,10 +185,20 @@ defineExpose({
   min-width: 0;
 }
 
+.payment-methods-badges {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  align-items: flex-end;
+}
+
 .payment-methods-more-actions .pill-button {
   white-space: nowrap;
   min-width: 0;
   color: white;
+  font-size: 0.75rem;
+  height: 28px;
+  padding: 0 0.6rem;
 }
 
 @media (max-width: 1400px) {

@@ -24,6 +24,12 @@ function validateField(fieldName) {
   const value = props.form[fieldName]
   errors.value[fieldName] = ''
 
+  if ((fieldName === 'first_name' || fieldName === 'last_name') && value) {
+    if (value.length < 2) {
+      errors.value[fieldName] = 'Debe ser mayor a dos caracteres'
+    }
+  }
+
   if (fieldName === 'email' && value) {
     const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/
     if (!emailRegex.test(value)) {

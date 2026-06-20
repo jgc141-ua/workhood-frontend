@@ -31,12 +31,14 @@ const paymentMethodStore = usePaymentMethodStore()
 const form = ref({
   name: '',
   is_active: true,
+  member_visible: true,
 })
 
 function syncForm(val) {
   form.value = {
     name: val.name ?? '',
     is_active: val.is_active !== false,
+    member_visible: val.member_visible !== false,
   }
 }
 
@@ -64,6 +66,7 @@ function handleSubmit() {
   const payload = {
     name: props.isEdit ? props.initialName : targetName,
     is_active: !!form.value.is_active,
+    member_visible: !!form.value.member_visible,
   }
 
   if (props.isEdit && props.initialName && targetName !== props.initialName) {
@@ -80,6 +83,7 @@ function handleSubmit() {
     <p v-if="nameError" class="input-hint error">{{ nameError }}</p>
 
     <PrettyCheckbox v-model="form.is_active" text="Activo" />
+    <PrettyCheckbox v-model="form.member_visible" text="Visible para el miembro" />
 
     <FormActions :submit-label="isEdit ? 'Guardar cambios' : 'Crear'" :disabled="!canSubmit" @cancel="emit('cancel')" />
   </form>

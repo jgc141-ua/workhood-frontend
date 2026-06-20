@@ -2,19 +2,32 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { IonContent, onIonViewWillEnter } from '@ionic/vue'
 import MobileHeader from '@/components/MobileHeader.vue'
-import AppModal from '@/components/AppModal.vue'
 import DataTablePagination from '@/components/DataTablePagination.vue'
 import PrettyInputSelector from '@/components/PrettyInputSelector.vue'
+import InvoiceDetailModal from '@/components/InvoiceDetailModal.vue'
+import InvoicePayModal from '@/components/InvoicePayModal.vue'
 import { useInvoiceStore } from '@/stores/invoiceStore'
+import { usePaymentMethodStore } from '@/stores/paymentMethodStore'
 import { useAuthStore } from '@/stores/authStore'
 import { showToast } from '@/composables/toast'
 
 const invoiceStore = useInvoiceStore()
+const paymentMethodStore = usePaymentMethodStore()
 const authStore = useAuthStore()
 
 const selectedState = ref('all')
 const isDetailModalOpen = ref(false)
 const isLoadingDetail = ref(false)
+const isPayModalOpen = ref(false)
+const invoiceToPay = ref(null)
+
+const activePaymentMethods = computed(() =>
+  paymentMethodStore.allPaymentMethods.filter((m) => m.is_active && m.member_visible)
+)
+
+const paymentMethodOptions = computed(() =>
+  activePaymentMethods.value.map((m) => ({ value: m.id, label: m.name }))
+)
 
 const stateLabels = {
   EMITIDA: 'Emitida',
@@ -77,14 +90,30 @@ function formatDate(value) {
   return new Date(value).toLocaleDateString('es-ES')
 }
 
-function formatDateTime(value) {
-  if (!value) return '-'
-  return new Date(value).toLocaleString('es-ES')
-}
-
 function formatPrice(value) {
   if (value == null) return '-'
   return `${Number(value).toFixed(2)} €`
+}
+
+function openPayModal(invoice) {
+  invoiceToPay.value = invoice
+  isPayModalOpen.value = true
+}
+
+function closePayModal() {
+  isPayModalOpen.value = false
+}
+
+async function handlePay(payload) {
+  if (!invoiceToPay.value) return
+  try {
+    await invoiceStore.payInvoice(invoiceToPay.value.id, payload)
+    showToast('Factura pagada correctamente', 'success')
+    closePayModal()
+    await loadInvoices()
+  } catch (err) {
+    showToast(err.message || 'Error al pagar la factura')
+  }
 }
 
 watch(selectedState, () => loadInvoices(1))
@@ -92,6 +121,9 @@ watch(selectedState, () => loadInvoices(1))
 onMounted(() => {
   if (!authStore.isAuthenticated) return
   loadInvoices()
+  if (!paymentMethodStore.allPaymentMethods.length) {
+    paymentMethodStore.fetchPaymentMethods().catch(() => {})
+  }
 })
 
 onIonViewWillEnter(() => {
@@ -119,9 +151,8 @@ onIonViewWillEnter(() => {
       </div>
 
       <div v-else class="invoices-list">
-        <article v-for="invoice in invoiceStore.myInvoices" :key="invoice.id" class="card invoice-card"
-          @click="openDetail(invoice)">
-          <div class="invoice-card-main">
+        <article v-for="invoice in invoiceStore.myInvoices" :key="invoice.id" class="card invoice-card">
+          <div class="invoice-card-main" @click="openDetail(invoice)">
             <h3 class="invoice-card-number">{{ invoice.invoice_number }}</h3>
             <p class="invoice-card-concept text-truncate">{{ invoice.concept }}</p>
             <p class="invoice-card-date">Emitida: {{ formatDate(invoice.issue_date) }}</p>
@@ -132,6 +163,10 @@ onIonViewWillEnter(() => {
               {{ stateLabels[invoice.state] || invoice.state }}
             </span>
             <span class="invoice-card-total">{{ formatPrice(invoice.total) }}</span>
+            <button v-if="invoice.state === 'EMITIDA' || invoice.state === 'VENCIDA'" type="button"
+              class="btn btn-primary invoice-pay-btn" @click.stop="openPayModal(invoice)">
+              Pagar
+            </button>
           </div>
         </article>
       </div>
@@ -141,93 +176,13 @@ onIonViewWillEnter(() => {
           :items-length="invoiceStore.myInvoices.length" @prev-page="prevPage" @next-page="nextPage" />
       </div>
 
-      <!-- Modal detalle -->
-      <AppModal :show="isDetailModalOpen" title="Detalle de factura" @close="closeDetail">
-        <div v-if="isLoadingDetail" class="server-state">Cargando...</div>
-        <div v-else-if="invoiceStore.currentInvoice" class="invoice-detail">
-          <div class="detail-section">
-            <div class="detail-row">
-              <span class="detail-label">Número</span>
-              <span class="detail-value">{{ invoiceStore.currentInvoice.invoice_number }}</span>
-            </div>
-            <div class="detail-row">
-              <span class="detail-label">Concepto</span>
-              <span class="detail-value">{{ invoiceStore.currentInvoice.concept }}</span>
-            </div>
-            <div class="detail-row">
-              <span class="detail-label">Estado</span>
-              <span class="detail-value">
-                <span class="invoice-badge"
-                  :class="`invoice-badge--${invoiceStore.currentInvoice.state.toLowerCase()}`">
-                  {{ stateLabels[invoiceStore.currentInvoice.state] || invoiceStore.currentInvoice.state }}
-                </span>
-              </span>
-            </div>
-          </div>
+      <InvoicePayModal :show="isPayModalOpen" :invoice="invoiceToPay" title="Pagar factura"
+        submit-label="Pagar" :payment-method-options="paymentMethodOptions"
+        :loading="invoiceStore.loading" :error="invoiceStore.error || ''"
+        @close="closePayModal" @pay="handlePay" />
 
-          <div class="detail-section">
-            <h4 class="detail-title">Datos del emisor</h4>
-            <p class="detail-text">{{ invoiceStore.currentInvoice.issuer_name }}</p>
-            <p class="detail-text">NIF: {{ invoiceStore.currentInvoice.issuer_nif }}</p>
-            <p class="detail-text">{{ invoiceStore.currentInvoice.issuer_address }}</p>
-          </div>
-
-          <div class="detail-section">
-            <h4 class="detail-title">Datos del receptor</h4>
-            <p class="detail-text">{{ invoiceStore.currentInvoice.user_name }}</p>
-            <p class="detail-text">NIF: {{ invoiceStore.currentInvoice.user_nif }}</p>
-            <p class="detail-text">{{ invoiceStore.currentInvoice.user_address }}</p>
-          </div>
-
-          <div class="detail-section">
-            <h4 class="detail-title">Conceptos</h4>
-            <div v-for="item in invoiceStore.currentInvoice.items" :key="item.id" class="detail-item">
-              <div>
-                <p class="detail-text">{{ item.description }}</p>
-                <p class="detail-subtext">{{ item.quantity }} x {{ formatPrice(item.unit_price) }}</p>
-              </div>
-              <span class="detail-item-subtotal">{{ formatPrice(item.subtotal) }}</span>
-            </div>
-          </div>
-
-          <div class="detail-section">
-            <div class="detail-row">
-              <span class="detail-label">Base imponible</span>
-              <span class="detail-value">{{ formatPrice(invoiceStore.currentInvoice.tax_base) }}</span>
-            </div>
-            <div class="detail-row">
-              <span class="detail-label">IVA ({{ (Number(invoiceStore.currentInvoice.iva_rate) * 100).toFixed(0)
-                }}%)</span>
-              <span class="detail-value">{{ formatPrice(invoiceStore.currentInvoice.iva_amount) }}</span>
-            </div>
-            <div class="detail-row detail-row-total">
-              <span class="detail-label">Total</span>
-              <span class="detail-value detail-value-total">{{ formatPrice(invoiceStore.currentInvoice.total) }}</span>
-            </div>
-          </div>
-
-          <div class="detail-section">
-            <h4 class="detail-title">Pagos registrados</h4>
-            <div v-if="!invoiceStore.currentInvoice.payments.length" class="detail-empty">
-              No hay pagos registrados.
-            </div>
-            <div v-for="payment in invoiceStore.currentInvoice.payments" :key="payment.id" class="detail-item">
-              <div>
-                <p class="detail-text">{{ formatPrice(payment.amount) }}</p>
-                <p class="detail-subtext">
-                  {{ payment.method_name }} · {{ formatDateTime(payment.payment_date) }}
-                </p>
-              </div>
-              <span class="detail-item-subtotal">{{ payment.registered_by_email }}</span>
-            </div>
-          </div>
-
-          <div v-if="invoiceStore.currentInvoice.cancelled_reason" class="detail-section detail-cancelled">
-            <h4 class="detail-title">Motivo de anulación</h4>
-            <p class="detail-text">{{ invoiceStore.currentInvoice.cancelled_reason }}</p>
-          </div>
-        </div>
-      </AppModal>
+      <InvoiceDetailModal :show="isDetailModalOpen" :loading="isLoadingDetail"
+        :invoice="invoiceStore.currentInvoice" @close="closeDetail" />
     </section>
   </ion-content>
 </template>
@@ -298,6 +253,12 @@ onIonViewWillEnter(() => {
   color: var(--primary);
 }
 
+.invoice-pay-btn {
+  min-height: 36px;
+  padding: 0.5rem 1rem;
+  font-size: 0.85rem;
+}
+
 .invoice-badge {
   padding: 0.25rem 0.6rem;
   border-radius: 9999px;
@@ -328,92 +289,6 @@ onIonViewWillEnter(() => {
 .pagination-card {
   margin-top: var(--space-4);
   padding: var(--space-2) var(--space-3);
-}
-
-/* Modal detalle */
-.invoice-detail {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-5);
-}
-
-.detail-section {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-  padding-bottom: var(--space-4);
-  border-bottom: 1px solid var(--outline-variant);
-}
-
-.detail-section:last-child {
-  border-bottom: none;
-}
-
-.detail-title {
-  margin: 0 0 var(--space-2);
-  font-size: 0.95rem;
-  font-weight: 700;
-  color: var(--primary);
-}
-
-.detail-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: var(--space-3);
-}
-
-.detail-label {
-  color: #6b7280;
-  font-size: 0.9rem;
-}
-
-.detail-value {
-  font-weight: 600;
-  text-align: right;
-}
-
-.detail-row-total {
-  padding-top: var(--space-2);
-  border-top: 1px solid var(--outline-variant);
-}
-
-.detail-value-total {
-  font-size: 1.1rem;
-  color: var(--primary);
-}
-
-.detail-text {
-  margin: 0;
-  font-size: 0.9rem;
-  color: #374151;
-}
-
-.detail-subtext {
-  margin: 0;
-  font-size: 0.8rem;
-  color: #6b7280;
-}
-
-.detail-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: var(--space-3);
-  padding: var(--space-2) 0;
-}
-
-.detail-item-subtotal {
-  font-weight: 600;
-}
-
-.detail-empty {
-  color: #6b7280;
-  font-size: 0.9rem;
-}
-
-.detail-cancelled {
-  color: var(--error);
 }
 
 .server-state {

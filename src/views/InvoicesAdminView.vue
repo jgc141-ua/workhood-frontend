@@ -2,20 +2,35 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { IonContent } from '@ionic/vue'
 import MobileHeader from '@/components/MobileHeader.vue'
-import AppModal from '@/components/AppModal.vue'
 import DataTableColumns from '@/components/DataTableColumns.vue'
 import PrettyInputSelector from '@/components/PrettyInputSelector.vue'
+import MoreActionsButton from '@/components/MoreActionsButton.vue'
+import IconInvoice from '@/assets/icons/IconInvoice.vue'
+import InvoiceDetailModal from '@/components/InvoiceDetailModal.vue'
+import InvoicePayModal from '@/components/InvoicePayModal.vue'
 import { useInvoiceStore } from '@/stores/invoiceStore'
+import { usePaymentMethodStore } from '@/stores/paymentMethodStore'
 import { useAuthStore } from '@/stores/authStore'
 import { showToast } from '@/composables/toast'
 
 const invoiceStore = useInvoiceStore()
+const paymentMethodStore = usePaymentMethodStore()
 const authStore = useAuthStore()
 
 const selectedState = ref('all')
 const selectedEmail = ref('')
 const isDetailModalOpen = ref(false)
 const isLoadingDetail = ref(false)
+const isPayModalOpen = ref(false)
+const invoiceToPay = ref(null)
+
+const activePaymentMethods = computed(() =>
+  paymentMethodStore.allPaymentMethods.filter((m) => m.is_active)
+)
+
+const paymentMethodOptions = computed(() =>
+  activePaymentMethods.value.map((m) => ({ value: m.id, label: m.name }))
+)
 
 const stateLabels = {
   EMITIDA: 'Emitida',
@@ -40,6 +55,11 @@ const invoiceColumns = [
   { key: 'due_date', label: 'VENCIM.', width: '0.75fr' },
   { key: 'state', label: 'ESTADO', width: '0.75fr' },
   { key: 'total', label: 'TOTAL', width: '0.5fr' },
+  { key: 'actions', label: '', width: '0.25fr' },
+]
+
+const moreActionsOpts = [
+  { icon: IconInvoice, label: 'Registrar pago', action: 'pay', danger: false },
 ]
 
 const pagination = computed(() => ({
@@ -89,14 +109,43 @@ function formatDate(value) {
   return new Date(value).toLocaleDateString('es-ES')
 }
 
-function formatDateTime(value) {
-  if (!value) return '-'
-  return new Date(value).toLocaleString('es-ES')
-}
-
 function formatPrice(value) {
   if (value == null) return '-'
   return `${Number(value).toFixed(2)} €`
+}
+
+function openPayModal(invoice) {
+  invoiceToPay.value = invoice
+  isPayModalOpen.value = true
+}
+
+function closePayModal() {
+  isPayModalOpen.value = false
+}
+
+function handleInvoiceAction(invoice, option) {
+  if (option.action === 'pay') {
+    openPayModal(invoice)
+  }
+}
+
+function invoiceActionOptions(invoice) {
+  if (invoice.state === 'EMITIDA' || invoice.state === 'VENCIDA') {
+    return moreActionsOpts
+  }
+  return []
+}
+
+async function handlePay(payload) {
+  if (!invoiceToPay.value) return
+  try {
+    await invoiceStore.registerPayment(invoiceToPay.value.id, payload)
+    showToast('Pago registrado correctamente', 'success')
+    closePayModal()
+    await loadInvoices()
+  } catch (err) {
+    showToast(err.message || 'Error al registrar el pago')
+  }
 }
 
 watch(selectedState, () => loadInvoices(1))
@@ -112,6 +161,9 @@ watch(selectedEmail, () => {
 onMounted(() => {
   if (!authStore.isAuthenticated) return
   loadInvoices()
+  if (!paymentMethodStore.allPaymentMethods.length) {
+    paymentMethodStore.fetchPaymentMethods().catch(() => {})
+  }
 })
 </script>
 
@@ -129,131 +181,53 @@ onMounted(() => {
           class="invoices-filter-selector" />
         <input v-model="selectedEmail" type="text" class="invoices-filter-email" placeholder="Filtrar por email" />
       </div>
+
+      <DataTableColumns :columns="invoiceColumns" :items="invoiceStore.allInvoices" key-field="id"
+        :loading="invoiceStore.loading" :error="!!invoiceStore.error" :pagination="pagination" @prev-page="prevPage"
+        @next-page="nextPage">
+
+        <template #cell-invoice_number="{ item }">
+          <button type="button" class="invoice-link" @click="openDetail(item)">
+            {{ item.invoice_number }}
+          </button>
+        </template>
+
+        <template #cell-concept="{ item }">
+          <div class="data-table-text text-truncate" :title="item.concept">{{ item.concept }}</div>
+        </template>
+
+        <template #cell-issue_date="{ item }">
+          <div class="data-table-text">{{ formatDate(item.issue_date) }}</div>
+        </template>
+
+        <template #cell-due_date="{ item }">
+          <div class="data-table-text">{{ formatDate(item.due_date) }}</div>
+        </template>
+
+        <template #cell-state="{ item }">
+          <span class="invoice-badge" :class="`invoice-badge--${item.state.toLowerCase()}`">
+            {{ stateLabels[item.state] || item.state }}
+          </span>
+        </template>
+
+        <template #cell-total="{ item }">
+          <div class="data-table-text data-table-text--primary">{{ formatPrice(item.total) }}</div>
+        </template>
+
+        <template #cell-actions="{ item }">
+          <MoreActionsButton v-if="invoiceActionOptions(item).length" :options="invoiceActionOptions(item)"
+            @select="(opt) => handleInvoiceAction(item, opt)" />
+        </template>
+      </DataTableColumns>
+
+      <InvoicePayModal :show="isPayModalOpen" :invoice="invoiceToPay" title="Registrar pago"
+        submit-label="Registrar pago" show-member :payment-method-options="paymentMethodOptions"
+        :loading="invoiceStore.loading" :error="invoiceStore.error || ''"
+        @close="closePayModal" @pay="handlePay" />
+
+      <InvoiceDetailModal :show="isDetailModalOpen" :loading="isLoadingDetail"
+        :invoice="invoiceStore.currentInvoice" show-member @close="closeDetail" />
     </section>
-
-    <DataTableColumns :columns="invoiceColumns" :items="invoiceStore.allInvoices" key-field="id"
-      :loading="invoiceStore.loading" :error="!!invoiceStore.error" :pagination="pagination" @prev-page="prevPage"
-      @next-page="nextPage">
-
-      <template #cell-invoice_number="{ item }">
-        <button type="button" class="invoice-link" @click="openDetail(item)">
-          {{ item.invoice_number }}
-        </button>
-      </template>
-
-      <template #cell-concept="{ item }">
-        <div class="data-table-text text-truncate" :title="item.concept">{{ item.concept }}</div>
-      </template>
-
-      <template #cell-issue_date="{ item }">
-        <div class="data-table-text">{{ formatDate(item.issue_date) }}</div>
-      </template>
-
-      <template #cell-due_date="{ item }">
-        <div class="data-table-text">{{ formatDate(item.due_date) }}</div>
-      </template>
-
-      <template #cell-state="{ item }">
-        <span class="invoice-badge" :class="`invoice-badge--${item.state.toLowerCase()}`">
-          {{ stateLabels[item.state] || item.state }}
-        </span>
-      </template>
-
-      <template #cell-total="{ item }">
-        <div class="data-table-text data-table-text--primary">{{ formatPrice(item.total) }}</div>
-      </template>
-    </DataTableColumns>
-
-    <!-- Modal detalle -->
-    <AppModal :show="isDetailModalOpen" title="Detalle de factura" @close="closeDetail">
-      <div v-if="isLoadingDetail" class="server-state">Cargando...</div>
-      <div v-else-if="invoiceStore.currentInvoice" class="invoice-detail">
-        <div class="detail-section">
-          <div class="detail-row">
-            <span class="detail-label">Número</span>
-            <span class="detail-value">{{ invoiceStore.currentInvoice.invoice_number }}</span>
-          </div>
-          <div class="detail-row">
-            <span class="detail-label">Concepto</span>
-            <span class="detail-value">{{ invoiceStore.currentInvoice.concept }}</span>
-          </div>
-          <div class="detail-row">
-            <span class="detail-label">Miembro</span>
-            <span class="detail-value">{{ invoiceStore.currentInvoice.user_email }}</span>
-          </div>
-          <div class="detail-row">
-            <span class="detail-label">Estado</span>
-            <span class="detail-value">
-              <span class="invoice-badge" :class="`invoice-badge--${invoiceStore.currentInvoice.state.toLowerCase()}`">
-                {{ stateLabels[invoiceStore.currentInvoice.state] || invoiceStore.currentInvoice.state }}
-              </span>
-            </span>
-          </div>
-        </div>
-
-        <div class="detail-section">
-          <h4 class="detail-title">Datos del emisor</h4>
-          <p class="detail-text">{{ invoiceStore.currentInvoice.issuer_name }}</p>
-          <p class="detail-text">NIF: {{ invoiceStore.currentInvoice.issuer_nif }}</p>
-          <p class="detail-text">{{ invoiceStore.currentInvoice.issuer_address }}</p>
-        </div>
-
-        <div class="detail-section">
-          <h4 class="detail-title">Datos del receptor</h4>
-          <p class="detail-text">{{ invoiceStore.currentInvoice.user_name }}</p>
-          <p class="detail-text">NIF: {{ invoiceStore.currentInvoice.user_nif }}</p>
-          <p class="detail-text">{{ invoiceStore.currentInvoice.user_address }}</p>
-        </div>
-
-        <div class="detail-section">
-          <h4 class="detail-title">Conceptos</h4>
-          <div v-for="item in invoiceStore.currentInvoice.items" :key="item.id" class="detail-item">
-            <div>
-              <p class="detail-text">{{ item.description }}</p>
-              <p class="detail-subtext">{{ item.quantity }} x {{ formatPrice(item.unit_price) }}</p>
-            </div>
-            <span class="detail-item-subtotal">{{ formatPrice(item.subtotal) }}</span>
-          </div>
-        </div>
-
-        <div class="detail-section">
-          <div class="detail-row">
-            <span class="detail-label">Base imponible</span>
-            <span class="detail-value">{{ formatPrice(invoiceStore.currentInvoice.tax_base) }}</span>
-          </div>
-          <div class="detail-row">
-            <span class="detail-label">IVA ({{ (Number(invoiceStore.currentInvoice.iva_rate) * 100).toFixed(0)
-            }}%)</span>
-            <span class="detail-value">{{ formatPrice(invoiceStore.currentInvoice.iva_amount) }}</span>
-          </div>
-          <div class="detail-row detail-row-total">
-            <span class="detail-label">Total</span>
-            <span class="detail-value detail-value-total">{{ formatPrice(invoiceStore.currentInvoice.total) }}</span>
-          </div>
-        </div>
-
-        <div class="detail-section">
-          <h4 class="detail-title">Pagos registrados</h4>
-          <div v-if="!invoiceStore.currentInvoice.payments.length" class="detail-empty">
-            No hay pagos registrados.
-          </div>
-          <div v-for="payment in invoiceStore.currentInvoice.payments" :key="payment.id" class="detail-item">
-            <div>
-              <p class="detail-text">{{ formatPrice(payment.amount) }}</p>
-              <p class="detail-subtext">
-                {{ payment.method_name }} · {{ formatDateTime(payment.payment_date) }}
-              </p>
-            </div>
-            <span class="detail-item-subtotal">{{ payment.registered_by_email }}</span>
-          </div>
-        </div>
-
-        <div v-if="invoiceStore.currentInvoice.cancelled_reason" class="detail-section detail-cancelled">
-          <h4 class="detail-title">Motivo de anulación</h4>
-          <p class="detail-text">{{ invoiceStore.currentInvoice.cancelled_reason }}</p>
-        </div>
-      </div>
-    </AppModal>
   </ion-content>
 </template>
 
@@ -320,92 +294,6 @@ onMounted(() => {
 
 .invoice-badge--anulada {
   background: #6b7280;
-}
-
-/* Modal detalle */
-.invoice-detail {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-5);
-}
-
-.detail-section {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-  padding-bottom: var(--space-4);
-  border-bottom: 1px solid var(--outline-variant);
-}
-
-.detail-section:last-child {
-  border-bottom: none;
-}
-
-.detail-title {
-  margin: 0 0 var(--space-2);
-  font-size: 0.95rem;
-  font-weight: 700;
-  color: var(--primary);
-}
-
-.detail-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: var(--space-3);
-}
-
-.detail-label {
-  color: #6b7280;
-  font-size: 0.9rem;
-}
-
-.detail-value {
-  font-weight: 600;
-  text-align: right;
-}
-
-.detail-row-total {
-  padding-top: var(--space-2);
-  border-top: 1px solid var(--outline-variant);
-}
-
-.detail-value-total {
-  font-size: 1.1rem;
-  color: var(--primary);
-}
-
-.detail-text {
-  margin: 0;
-  font-size: 0.9rem;
-  color: #374151;
-}
-
-.detail-subtext {
-  margin: 0;
-  font-size: 0.8rem;
-  color: #6b7280;
-}
-
-.detail-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: var(--space-3);
-  padding: var(--space-2) 0;
-}
-
-.detail-item-subtotal {
-  font-weight: 600;
-}
-
-.detail-empty {
-  color: #6b7280;
-  font-size: 0.9rem;
-}
-
-.detail-cancelled {
-  color: var(--error);
 }
 
 .server-state {
