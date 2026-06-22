@@ -218,6 +218,29 @@ export const useInvoiceStore = defineStore('invoices', () => {
     }
   }
 
+  async function cancelInvoice(id, reason) {
+    loading.value = true
+    error.value = null
+    try {
+      const response = await apiFetch(
+        ENDPOINTS.invoiceCancel,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id, reason }),
+        },
+        tokenStore,
+      )
+      await checkResponse(response, 'Error al anular la factura')
+      return await response.json()
+    } catch (err) {
+      error.value = err.message || 'Error al anular la factura'
+      throw err
+    } finally {
+      loading.value = false
+    }
+  }
+
   return {
     myInvoices,
     myCount,
@@ -243,6 +266,7 @@ export const useInvoiceStore = defineStore('invoices', () => {
     issueInvoice,
     payInvoice,
     registerPayment,
+    cancelInvoice,
     clearInvoices,
   }
 })

@@ -315,7 +315,10 @@ function handleMemberAction(member, option) {
 }
 
 function memberActionOptions(member) {
-  const options = [{ icon: IconEdit, label: 'Editar', action: 'edit', danger: false }]
+  const options = [
+    { icon: IconEdit, label: 'Editar', action: 'edit', danger: false },
+    { icon: IconInvoice, label: 'Generar factura', action: 'issue-invoice', danger: false },
+  ]
 
   if (member.active_membership) {
     options.push({ icon: IconTrash, label: 'Cancelar suscripción (inmediato)', action: 'cancel-membership', danger: true })
@@ -324,7 +327,6 @@ function memberActionOptions(member) {
   }
 
   options.push(
-    { icon: IconInvoice, label: 'Generar factura', action: 'issue-invoice', danger: false },
     { icon: IconTrash, label: 'Eliminar', action: 'delete', danger: true },
   )
 
@@ -333,11 +335,11 @@ function memberActionOptions(member) {
 
 // Carga inicial y recarga al entrar a la vista
 onMounted(async () => {
-  await membersStore.fetchMembers().catch(() => {})
+  await membersStore.fetchMembers().catch(() => { })
 })
 
 onIonViewWillEnter(async () => {
-  await membersStore.fetchMembers().catch(() => {})
+  await membersStore.fetchMembers().catch(() => { })
 })
 </script>
 
@@ -395,8 +397,8 @@ onIonViewWillEnter(async () => {
           @after-close="onCancelMembershipModalClosed" />
 
         <!-- Modal: generar factura -->
-        <AppModal :show="isIssueInvoiceModalOpen" title="Generar factura"
-          @close="closeIssueInvoiceModal" @after-close="onIssueInvoiceModalClosed">
+        <AppModal :show="isIssueInvoiceModalOpen" title="Generar factura" @close="closeIssueInvoiceModal"
+          @after-close="onIssueInvoiceModalClosed">
           <form class="invoice-issue-form" @submit.prevent="handleIssueInvoice">
             <p class="invoice-issue-hint">
               Generar factura a: <strong>{{ memberToInvoice?.email }}</strong>
@@ -407,8 +409,8 @@ onIonViewWillEnter(async () => {
               placeholder="Ej: 50.00" required />
             <FormInput v-model="invoiceForm.iva_rate" label="IVA (opcional, ej: 0.21 para 21%)" type="number"
               step="0.01" min="0" max="1" placeholder="0.21 (por defecto)" />
-            <FormActions submit-label="Generar" :disabled="invoiceStore.loading"
-              :loading="invoiceStore.loading" @cancel="closeIssueInvoiceModal" />
+            <FormActions submit-label="Generar" :disabled="invoiceStore.loading" :loading="invoiceStore.loading"
+              @cancel="closeIssueInvoiceModal" />
           </form>
         </AppModal>
 
@@ -662,5 +664,4 @@ onIonViewWillEnter(async () => {
   font-size: 0.9rem;
   color: #6b7280;
 }
-
 </style>

@@ -6,8 +6,12 @@ import DataTableColumns from '@/components/DataTableColumns.vue'
 import PrettyInputSelector from '@/components/PrettyInputSelector.vue'
 import MoreActionsButton from '@/components/MoreActionsButton.vue'
 import IconInvoice from '@/assets/icons/IconInvoice.vue'
+import IconTrash from '@/assets/icons/IconTrash.vue'
 import InvoiceDetailModal from '@/components/InvoiceDetailModal.vue'
 import InvoicePayModal from '@/components/InvoicePayModal.vue'
+import AppModal from '@/components/AppModal.vue'
+import FormInput from '@/components/forms/FormInput.vue'
+import FormActions from '@/components/forms/FormActions.vue'
 import { useInvoiceStore } from '@/stores/invoiceStore'
 import { usePaymentMethodStore } from '@/stores/paymentMethodStore'
 import { useAuthStore } from '@/stores/authStore'
@@ -60,7 +64,13 @@ const invoiceColumns = [
 
 const moreActionsOpts = [
   { icon: IconInvoice, label: 'Registrar pago', action: 'pay', danger: false },
+  { icon: IconTrash, label: 'Anular', action: 'cancel', danger: true },
 ]
+
+// Modal de anulación
+const isCancelModalOpen = ref(false)
+const invoiceToCancel = ref(null)
+const cancelReason = ref('')
 
 const pagination = computed(() => ({
   page: invoiceStore.allPage,
@@ -126,6 +136,8 @@ function closePayModal() {
 function handleInvoiceAction(invoice, option) {
   if (option.action === 'pay') {
     openPayModal(invoice)
+  } else if (option.action === 'cancel') {
+    openCancelModal(invoice)
   }
 }
 
@@ -134,6 +146,32 @@ function invoiceActionOptions(invoice) {
     return moreActionsOpts
   }
   return []
+}
+
+function openCancelModal(invoice) {
+  invoiceToCancel.value = invoice
+  cancelReason.value = ''
+  isCancelModalOpen.value = true
+}
+
+function closeCancelModal() {
+  isCancelModalOpen.value = false
+}
+
+async function handleCancel() {
+  if (!invoiceToCancel.value || !cancelReason.value.trim()) {
+    showToast('El motivo de anulación es obligatorio')
+    return
+  }
+
+  try {
+    await invoiceStore.cancelInvoice(invoiceToCancel.value.id, cancelReason.value.trim())
+    showToast('Factura anulada correctamente', 'success')
+    closeCancelModal()
+    await loadInvoices()
+  } catch (err) {
+    showToast(err.message || 'Error al anular la factura')
+  }
 }
 
 async function handlePay(payload) {
@@ -227,6 +265,21 @@ onMounted(() => {
 
       <InvoiceDetailModal :show="isDetailModalOpen" :loading="isLoadingDetail"
         :invoice="invoiceStore.currentInvoice" show-member @close="closeDetail" />
+
+      <!-- Modal de anulación -->
+      <AppModal :show="isCancelModalOpen" title="Anular factura" @close="closeCancelModal">
+        <form class="cancel-form" @submit.prevent="handleCancel">
+          <p class="cancel-hint" v-if="invoiceToCancel">
+            Factura: <strong>{{ invoiceToCancel.invoice_number }}</strong><br />
+            Miembro: <strong>{{ invoiceToCancel.user_email }}</strong>
+          </p>
+          <FormInput v-model="cancelReason" label="Motivo de anulación"
+            placeholder="Describe el motivo de la anulación" required />
+          <p v-if="invoiceStore.error" class="error-message">{{ invoiceStore.error }}</p>
+          <FormActions submit-label="Anular" :disabled="!cancelReason.trim() || invoiceStore.loading"
+            :loading="invoiceStore.loading" @cancel="closeCancelModal" />
+        </form>
+      </AppModal>
     </section>
   </ion-content>
 </template>
@@ -300,5 +353,24 @@ onMounted(() => {
   text-align: center;
   color: #6b7280;
   padding: var(--space-4);
+}
+
+.cancel-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.cancel-hint {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #6b7280;
+  line-height: 1.6;
+}
+
+.error-message {
+  color: var(--error);
+  font-size: 0.9rem;
+  margin: 0;
 }
 </style>
