@@ -11,7 +11,9 @@ const auth = useAuthStore()
 async function handleRegister(formData) {
   const ok = await auth.register(formData)
   if (!ok) {
-    showToast(auth.errors.register || 'Error al enviar la solicitud. Por favor, inténtalo de nuevo.')
+    const errs = auth.errors
+    const message = errs?.email || errs?.register || 'Error al enviar la solicitud. Por favor, inténtalo de nuevo.'
+    showToast(message)
   }
 }
 </script>

@@ -211,9 +211,6 @@ async function handleSubmit() {
     <div v-if="reservationType !== 'DAILY' && checkingAvailability" class="availability-status checking">
       Comprobando disponibilidad...
     </div>
-    <div v-else-if="reservationStore.error" class="error-message">
-      {{ reservationStore.error }}
-    </div>
 
     <FormActions submit-label="Reservar" :disabled="!canSubmit || reservationStore.loading"
       :loading="reservationStore.loading" @cancel="cancel" />

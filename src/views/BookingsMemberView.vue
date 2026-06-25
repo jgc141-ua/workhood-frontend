@@ -42,6 +42,10 @@ const typeLabels = {
   MONTHLY: 'Mensual',
 }
 
+function isPendingPayment(reservation) {
+  return reservation.state === 'Pending' && reservation.invoice_state !== 'ANULADA'
+}
+
 const reservationOptions = [
   { icon: IconTrash, label: 'Cancelar reserva', action: 'cancel', danger: true },
 ]
@@ -316,8 +320,11 @@ onIonViewWillEnter(loadInitialData)
               <span class="reservation-badge" :class="`reservation-badge--${reservation.state.toLowerCase()}`">
                 {{ stateLabels[reservation.state] || reservation.state }}
               </span>
+              <span v-if="isPendingPayment(reservation)" class="reservation-badge reservation-badge--pending-payment">
+                Pendiente de pago
+              </span>
               <span class="reservation-pill">{{ typeLabels[reservation.reservation_type] || reservation.reservation_type
-              }}</span>
+                }}</span>
             </div>
           </div>
 
@@ -330,8 +337,7 @@ onIonViewWillEnter(loadInitialData)
 
       <div v-if="reservationStore.count > reservationStore.pageSize" class="card pagination-card">
         <DataTablePagination :pagination="myPagination" :loading="reservationStore.loading"
-          :items-length="reservationStore.reservations.length" @prev-page="onPrevMyPage"
-          @next-page="onNextMyPage" />
+          :items-length="reservationStore.reservations.length" @prev-page="onPrevMyPage" @next-page="onNextMyPage" />
       </div>
     </section>
   </ion-content>
@@ -598,6 +604,10 @@ onIonViewWillEnter(loadInitialData)
 
 .reservation-badge--cancelled {
   background: #dc2626;
+}
+
+.reservation-badge--pending-payment {
+  background: #f59e0b;
 }
 
 .reservation-pill {

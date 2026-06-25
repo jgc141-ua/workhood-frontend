@@ -196,11 +196,11 @@ watch(selectedEmail, () => {
   }, 500)
 })
 
-onMounted(() => {
+onMounted(async () => {
   if (!authStore.isAuthenticated) return
-  loadInvoices()
+  await loadInvoices()
   if (!paymentMethodStore.allPaymentMethods.length) {
-    paymentMethodStore.fetchPaymentMethods().catch(() => {})
+    paymentMethodStore.fetchPaymentMethods().catch(() => { })
   }
 })
 </script>
@@ -260,11 +260,10 @@ onMounted(() => {
 
       <InvoicePayModal :show="isPayModalOpen" :invoice="invoiceToPay" title="Registrar pago"
         submit-label="Registrar pago" show-member :payment-method-options="paymentMethodOptions"
-        :loading="invoiceStore.loading" :error="invoiceStore.error || ''"
-        @close="closePayModal" @pay="handlePay" />
+        :loading="invoiceStore.loading" :error="invoiceStore.error || ''" @close="closePayModal" @pay="handlePay" />
 
-      <InvoiceDetailModal :show="isDetailModalOpen" :loading="isLoadingDetail"
-        :invoice="invoiceStore.currentInvoice" show-member @close="closeDetail" />
+      <InvoiceDetailModal :show="isDetailModalOpen" :loading="isLoadingDetail" :invoice="invoiceStore.currentInvoice"
+        show-member @close="closeDetail" />
 
       <!-- Modal de anulación -->
       <AppModal :show="isCancelModalOpen" title="Anular factura" @close="closeCancelModal">
@@ -273,8 +272,8 @@ onMounted(() => {
             Factura: <strong>{{ invoiceToCancel.invoice_number }}</strong><br />
             Miembro: <strong>{{ invoiceToCancel.user_email }}</strong>
           </p>
-          <FormInput v-model="cancelReason" label="Motivo de anulación"
-            placeholder="Describe el motivo de la anulación" required />
+          <FormInput v-model="cancelReason" label="Motivo de anulación" placeholder="Describe el motivo de la anulación"
+            required />
           <p v-if="invoiceStore.error" class="error-message">{{ invoiceStore.error }}</p>
           <FormActions submit-label="Anular" :disabled="!cancelReason.trim() || invoiceStore.loading"
             :loading="invoiceStore.loading" @cancel="closeCancelModal" />

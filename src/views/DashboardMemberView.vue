@@ -67,6 +67,15 @@ function closeSubscribeModal() {
   isSubscribeModalOpen.value = false
 }
 
+async function handleToggleAutoRenew() {
+  try {
+    await membershipStore.toggleMyAutoRenew()
+    showToast('Renovación automática actualizada', 'success')
+  } catch (err) {
+    showToast(err.message || 'Error al cambiar la renovación automática')
+  }
+}
+
 async function onSubscribed() {
   await membershipStore.fetchMyMembership()
 }
@@ -158,10 +167,13 @@ const brand = inject('BRAND')
           <div class="membership-active-meta">
             <span class="pill-button pill-button-success pill-subscribe">Activa hasta {{ new
               Date(membershipStore.myMembership.end_date).toLocaleDateString() }}</span>
-            <span class="pill-button pill-subscribe"
-              :class="membershipStore.myMembership.auto_renew ? 'pill-button-success' : 'pill-button-warn'">
-              {{ membershipStore.myMembership.auto_renew ? 'Renovación automática' : 'Sin renovación automática' }}
-            </span>
+            <button type="button" class="pill-button pill-subscribe auto-renew-btn"
+              :class="membershipStore.myMembership.auto_renew ? 'pill-button-success' : 'pill-button-warn'"
+              :disabled="membershipStore.loading" @click="handleToggleAutoRenew">
+              {{ membershipStore.myMembership.auto_renew ? 'Renovación automática activada' :
+                'Renovación automática desactivada'
+              }}
+            </button>
           </div>
         </div>
       </section>
@@ -270,6 +282,21 @@ const brand = inject('BRAND')
   align-items: center;
   gap: var(--space-2);
   flex-wrap: wrap;
+}
+
+.auto-renew-btn {
+  cursor: pointer;
+  border: none;
+  transition: var(--transition-fast);
+}
+
+.auto-renew-btn:hover:not(:disabled) {
+  opacity: 0.85;
+}
+
+.auto-renew-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .membership-alert h3,

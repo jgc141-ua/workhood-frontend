@@ -24,11 +24,13 @@ export const ENDPOINTS = {
 
   // Membership
   myMembership: BASE + '/memberships/my-membership/',
+  myToggleAutoRenew: BASE + '/memberships/my-toggle-auto-renew/',
   availableResources: BASE + '/memberships/available-resources/',
   subscribe: BASE + '/memberships/subscribe/',
   memberMembership: BASE + '/memberships/member-membership/',
   subscribeMember: BASE + '/memberships/subscribe-member/',
   cancelMembership: BASE + '/memberships/cancel-membership/',
+  toggleAutoRenew: BASE + '/memberships/toggle-auto-renew/',
 
   // Benefits
   benefits: BASE + '/benefits/all/',

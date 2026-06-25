@@ -8,6 +8,7 @@ import IconEdit from '@/assets/icons/IconEdit.vue'
 import IconSearch from '@/assets/icons/IconSearch.vue'
 import IconMembers from '@/assets/icons/IconMembers.vue'
 import IconInvoice from '@/assets/icons/IconInvoice.vue'
+import IconRenew from '@/assets/icons/IconInvoiceFilled.vue'
 import AppModal from '@/components/AppModal.vue'
 import ConfirmModal from '@/components/ConfirmModal.vue'
 import RegisterForm from '@/components/forms/RegisterForm.vue'
@@ -311,6 +312,18 @@ function handleMemberAction(member, option) {
     openCancelMembershipModal(member)
   } else if (option.action === 'issue-invoice') {
     openIssueInvoiceModal(member)
+  } else if (option.action === 'toggle-auto-renew') {
+    handleToggleAutoRenew(member)
+  }
+}
+
+async function handleToggleAutoRenew(member) {
+  try {
+    await membershipStore.toggleAutoRenew(member.email)
+    showToast('Renovación automática actualizada', 'success')
+    await membersStore.fetchMembers()
+  } catch (err) {
+    showToast(err.message || 'Error al cambiar la renovación automática')
   }
 }
 
@@ -321,6 +334,12 @@ function memberActionOptions(member) {
   ]
 
   if (member.active_membership) {
+    options.push({
+      icon: IconRenew,
+      label: member.active_membership.auto_renew ? 'Desactivar renovación' : 'Activar renovación',
+      action: 'toggle-auto-renew',
+      danger: member.active_membership.auto_renew,
+    })
     options.push({ icon: IconTrash, label: 'Cancelar suscripción (inmediato)', action: 'cancel-membership', danger: true })
   } else {
     options.push({ icon: IconMembers, label: 'Suscribir', action: 'subscribe', danger: false })

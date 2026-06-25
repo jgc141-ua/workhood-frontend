@@ -40,6 +40,31 @@ export const useMembershipStore = defineStore('membership', () => {
     }
   }
 
+  async function toggleMyAutoRenew() {
+    loading.value = true
+    error.value = null
+    try {
+      const response = await apiFetch(
+        ENDPOINTS.myToggleAutoRenew,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+        },
+        tokenStore,
+      )
+      await checkResponse(response, 'Error al cambiar la renovación automática')
+
+      const data = await response.json()
+      await fetchMyMembership()
+      return data
+    } catch (err) {
+      error.value = err.message || 'Error al cambiar la renovación automática'
+      throw err
+    } finally {
+      loading.value = false
+    }
+  }
+
   async function fetchAvailableResources(membershipTypeId) {
     loading.value = true
     error.value = null
@@ -168,6 +193,31 @@ export const useMembershipStore = defineStore('membership', () => {
     }
   }
 
+  async function toggleAutoRenew(email) {
+    loading.value = true
+    error.value = null
+    try {
+      const response = await apiFetch(
+        ENDPOINTS.toggleAutoRenew,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email }),
+        },
+        tokenStore,
+      )
+
+      await checkResponse(response, 'Error al cambiar la renovación automática')
+
+      return await response.json()
+    } catch (err) {
+      error.value = err.message || 'Error al cambiar la renovación automática'
+      throw err
+    } finally {
+      loading.value = false
+    }
+  }
+
   function clearMembership() {
     myMembership.value = null
     availableResources.value = []
@@ -181,11 +231,13 @@ export const useMembershipStore = defineStore('membership', () => {
     error,
     hasActiveMembership,
     fetchMyMembership,
+    toggleMyAutoRenew,
     fetchAvailableResources,
     subscribe,
     fetchMemberMembership,
     subscribeMember,
     cancelMemberMembership,
+    toggleAutoRenew,
     clearMembership,
   }
 })

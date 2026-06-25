@@ -118,16 +118,12 @@ async function handlePay(payload) {
 
 watch(selectedState, () => loadInvoices(1))
 
-onMounted(() => {
+onMounted(async () => {
   if (!authStore.isAuthenticated) return
-  loadInvoices()
+  await loadInvoices()
   if (!paymentMethodStore.allPaymentMethods.length) {
-    paymentMethodStore.fetchPaymentMethods().catch(() => {})
+    paymentMethodStore.fetchPaymentMethods().catch(() => { })
   }
-})
-
-onIonViewWillEnter(() => {
-  if (authStore.isAuthenticated) loadInvoices()
 })
 </script>
 
@@ -176,13 +172,12 @@ onIonViewWillEnter(() => {
           :items-length="invoiceStore.myInvoices.length" @prev-page="prevPage" @next-page="nextPage" />
       </div>
 
-      <InvoicePayModal :show="isPayModalOpen" :invoice="invoiceToPay" title="Pagar factura"
-        submit-label="Pagar" :payment-method-options="paymentMethodOptions"
-        :loading="invoiceStore.loading" :error="invoiceStore.error || ''"
+      <InvoicePayModal :show="isPayModalOpen" :invoice="invoiceToPay" title="Pagar factura" submit-label="Pagar"
+        :payment-method-options="paymentMethodOptions" :loading="invoiceStore.loading" :error="invoiceStore.error || ''"
         @close="closePayModal" @pay="handlePay" />
 
-      <InvoiceDetailModal :show="isDetailModalOpen" :loading="isLoadingDetail"
-        :invoice="invoiceStore.currentInvoice" @close="closeDetail" />
+      <InvoiceDetailModal :show="isDetailModalOpen" :loading="isLoadingDetail" :invoice="invoiceStore.currentInvoice"
+        @close="closeDetail" />
     </section>
   </ion-content>
 </template>
