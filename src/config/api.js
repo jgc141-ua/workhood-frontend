@@ -85,4 +85,6 @@ export const ENDPOINTS = {
   invoiceIssue: BASE + '/invoices/issue/',
   registerPayment: BASE + '/invoices/register-payment/',
   invoiceCancel: BASE + '/invoices/cancel/',
+  myInvoicePdf: BASE + '/invoices/my-pdf/',
+  adminInvoicePdf: BASE + '/invoices/pdf/',
 }

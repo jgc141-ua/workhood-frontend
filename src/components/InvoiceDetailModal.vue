@@ -1,5 +1,7 @@
 <script setup>
 import AppModal from '@/components/AppModal.vue'
+import { useInvoiceStore } from '@/stores/invoiceStore'
+import { showToast } from '@/composables/toast'
 
 const props = defineProps({
   show: { type: Boolean, default: false },
@@ -8,7 +10,25 @@ const props = defineProps({
   showMember: { type: Boolean, default: false },
 })
 
-defineEmits(['close'])
+const emit = defineEmits(['close'])
+
+const invoiceStore = useInvoiceStore()
+
+async function handleDownloadPdf() {
+  if (!props.invoice) return
+  try {
+    await invoiceStore.downloadPdf(props.invoice.id, props.showMember)
+  } catch (err) {
+    showToast(err.message || 'Error al descargar el PDF')
+  }
+}
+
+const stateLabels = {
+  EMITIDA: 'Emitida',
+  PAGADA: 'Pagada',
+  VENCIDA: 'Vencida',
+  ANULADA: 'Anulada',
+}
 
 function formatDateTime(value) {
   if (!value) return '-'
@@ -22,29 +42,35 @@ function formatPrice(value) {
 </script>
 
 <template>
-  <AppModal :show="show" title="Detalle de factura" @close="$emit('close')">
+  <AppModal :show="show" title="Detalle de factura" @close="emit('close')">
     <div v-if="loading" class="server-state">Cargando...</div>
     <div v-else-if="invoice" class="invoice-detail">
       <div class="detail-section">
-        <div class="detail-row">
-          <span class="detail-label">Número</span>
-          <span class="detail-value">{{ invoice.invoice_number }}</span>
-        </div>
-        <div class="detail-row">
-          <span class="detail-label">Concepto</span>
-          <span class="detail-value">{{ invoice.concept }}</span>
-        </div>
-        <div v-if="showMember" class="detail-row">
-          <span class="detail-label">Miembro</span>
-          <span class="detail-value">{{ invoice.user_email }}</span>
-        </div>
-        <div class="detail-row">
-          <span class="detail-label">Estado</span>
-          <span class="detail-value">
-            <span class="invoice-badge" :class="`invoice-badge--${invoice.state.toLowerCase()}`">
-              {{ invoice.state }}
+        <button type="button" class="btn btn-secondary pdf-btn" @click="handleDownloadPdf">Descargar PDF</button>
+      </div>
+
+      <div class="detail-section">
+        <div class="header-row-content">
+          <div class="detail-row">
+            <span class="detail-label">Número</span>
+            <span class="detail-value">{{ invoice.invoice_number }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Concepto</span>
+            <span class="detail-value">{{ invoice.concept }}</span>
+          </div>
+          <div v-if="showMember" class="detail-row">
+            <span class="detail-label">Miembro</span>
+            <span class="detail-value">{{ invoice.user_email }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Estado</span>
+            <span class="detail-value">
+              <span class="invoice-badge" :class="`invoice-badge--${invoice.state.toLowerCase()}`">
+                {{ stateLabels[invoice.state] || invoice.state }}
+              </span>
             </span>
-          </span>
+          </div>
         </div>
       </div>
 
@@ -129,6 +155,17 @@ function formatPrice(value) {
 
 .detail-section:last-child {
   border-bottom: none;
+}
+
+.header-row-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.pdf-btn {
+  white-space: nowrap;
+  flex-shrink: 0;
+  padding: 10px;
 }
 
 .detail-title {

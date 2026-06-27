@@ -7,6 +7,7 @@ import PrettyInputSelector from '@/components/PrettyInputSelector.vue'
 import MoreActionsButton from '@/components/MoreActionsButton.vue'
 import IconInvoice from '@/assets/icons/IconInvoice.vue'
 import IconTrash from '@/assets/icons/IconTrash.vue'
+import IconDownload from '@/assets/icons/IconDownload.vue'
 import InvoiceDetailModal from '@/components/InvoiceDetailModal.vue'
 import InvoicePayModal from '@/components/InvoicePayModal.vue'
 import AppModal from '@/components/AppModal.vue'
@@ -63,8 +64,13 @@ const invoiceColumns = [
 ]
 
 const moreActionsOpts = [
+  { icon: IconDownload, label: 'Descargar PDF', action: 'pdf', danger: false },
   { icon: IconInvoice, label: 'Registrar pago', action: 'pay', danger: false },
   { icon: IconTrash, label: 'Anular', action: 'cancel', danger: true },
+]
+
+const pdfAction = [
+  { icon: IconDownload, label: 'Descargar PDF', action: 'pdf', danger: false },
 ]
 
 // Modal de anulación
@@ -138,6 +144,16 @@ function handleInvoiceAction(invoice, option) {
     openPayModal(invoice)
   } else if (option.action === 'cancel') {
     openCancelModal(invoice)
+  } else if (option.action === 'pdf') {
+    downloadInvoicePdf(invoice)
+  }
+}
+
+async function downloadInvoicePdf(invoice) {
+  try {
+    await invoiceStore.downloadPdf(invoice.id, true)
+  } catch (err) {
+    showToast(err.message || 'Error al descargar el PDF')
   }
 }
 
@@ -145,7 +161,7 @@ function invoiceActionOptions(invoice) {
   if (invoice.state === 'EMITIDA' || invoice.state === 'VENCIDA') {
     return moreActionsOpts
   }
-  return []
+  return pdfAction
 }
 
 function openCancelModal(invoice) {

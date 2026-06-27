@@ -4,6 +4,9 @@ import { IonContent, onIonViewWillEnter } from '@ionic/vue'
 import MobileHeader from '@/components/MobileHeader.vue'
 import DataTablePagination from '@/components/DataTablePagination.vue'
 import PrettyInputSelector from '@/components/PrettyInputSelector.vue'
+import MoreActionsButton from '@/components/MoreActionsButton.vue'
+import IconDownload from '@/assets/icons/IconDownload.vue'
+import IconTrash from '@/assets/icons/IconTrash.vue'
 import InvoiceDetailModal from '@/components/InvoiceDetailModal.vue'
 import InvoicePayModal from '@/components/InvoicePayModal.vue'
 import { useInvoiceStore } from '@/stores/invoiceStore'
@@ -43,6 +46,24 @@ const stateOptions = [
   { value: 'VENCIDA', label: 'Vencidas' },
   { value: 'ANULADA', label: 'Anuladas' },
 ]
+
+const moreActionsOpts = [
+  { icon: IconDownload, label: 'Descargar PDF', action: 'pdf', danger: false },
+]
+
+function invoiceActionOptions(invoice) {
+  return moreActionsOpts
+}
+
+async function handleInvoiceAction(invoice, option) {
+  if (option.action === 'pdf') {
+    try {
+      await invoiceStore.downloadPdf(invoice.id, false)
+    } catch (err) {
+      showToast(err.message || 'Error al descargar el PDF')
+    }
+  }
+}
 
 const pagination = computed(() => ({
   page: invoiceStore.myPage,
@@ -159,10 +180,14 @@ onMounted(async () => {
               {{ stateLabels[invoice.state] || invoice.state }}
             </span>
             <span class="invoice-card-total">{{ formatPrice(invoice.total) }}</span>
-            <button v-if="invoice.state === 'EMITIDA' || invoice.state === 'VENCIDA'" type="button"
-              class="btn btn-primary invoice-pay-btn" @click.stop="openPayModal(invoice)">
-              Pagar
-            </button>
+            <div class="invoice-card-actions">
+              <button v-if="invoice.state === 'EMITIDA' || invoice.state === 'VENCIDA'" type="button"
+                class="btn btn-primary invoice-pay-btn" @click.stop="openPayModal(invoice)">
+                Pagar
+              </button>
+              <MoreActionsButton :options="invoiceActionOptions(invoice)"
+                @select="(opt) => handleInvoiceAction(invoice, opt)" />
+            </div>
           </div>
         </article>
       </div>
@@ -252,6 +277,13 @@ onMounted(async () => {
   min-height: 36px;
   padding: 0.5rem 1rem;
   font-size: 0.85rem;
+}
+
+.invoice-card-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  justify-content: flex-end;
 }
 
 .invoice-badge {

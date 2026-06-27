@@ -71,7 +71,11 @@ export const useInvoiceStore = defineStore('invoices', () => {
       const query = new URLSearchParams()
       query.set('id', id)
 
-      const response = await apiFetch(`${ENDPOINTS.myInvoiceDetail}?${query.toString()}`, {}, tokenStore)
+      const response = await apiFetch(
+        `${ENDPOINTS.myInvoiceDetail}?${query.toString()}`,
+        {},
+        tokenStore,
+      )
       await checkResponse(response, 'Error al cargar la factura')
 
       const data = await response.json()
@@ -101,7 +105,11 @@ export const useInvoiceStore = defineStore('invoices', () => {
       if (params.dateFrom) query.set('date_from', params.dateFrom)
       if (params.dateTo) query.set('date_to', params.dateTo)
 
-      const response = await apiFetch(`${ENDPOINTS.allInvoices}?${query.toString()}`, {}, tokenStore)
+      const response = await apiFetch(
+        `${ENDPOINTS.allInvoices}?${query.toString()}`,
+        {},
+        tokenStore,
+      )
       await checkResponse(response, 'Error al cargar las facturas')
 
       const data = await response.json()
@@ -128,7 +136,11 @@ export const useInvoiceStore = defineStore('invoices', () => {
       const query = new URLSearchParams()
       query.set('id', id)
 
-      const response = await apiFetch(`${ENDPOINTS.adminInvoiceDetail}?${query.toString()}`, {}, tokenStore)
+      const response = await apiFetch(
+        `${ENDPOINTS.adminInvoiceDetail}?${query.toString()}`,
+        {},
+        tokenStore,
+      )
       await checkResponse(response, 'Error al cargar la factura')
 
       const data = await response.json()
@@ -241,6 +253,26 @@ export const useInvoiceStore = defineStore('invoices', () => {
     }
   }
 
+  async function downloadPdf(id, isAdmin = false) {
+    const endpoint = isAdmin ? ENDPOINTS.adminInvoicePdf : ENDPOINTS.myInvoicePdf
+    try {
+      const response = await apiFetch(`${endpoint}?id=${id}`, {}, tokenStore)
+      if (!response.ok) throw new Error('Error al descargar el PDF')
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `factura.pdf`
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      window.URL.revokeObjectURL(url)
+    } catch (err) {
+      error.value = err.message || 'Error al descargar el PDF'
+      throw err
+    }
+  }
+
   return {
     myInvoices,
     myCount,
@@ -267,6 +299,7 @@ export const useInvoiceStore = defineStore('invoices', () => {
     payInvoice,
     registerPayment,
     cancelInvoice,
+    downloadPdf,
     clearInvoices,
   }
 })
