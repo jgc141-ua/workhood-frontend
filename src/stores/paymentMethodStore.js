@@ -56,6 +56,27 @@ export const usePaymentMethodStore = defineStore('paymentMethods', () => {
     }
   }
 
+  async function fetchPaymentMethodsVisibles() {
+    loading.value = true
+    error.value = null
+    try {
+      const response = await apiFetch(ENDPOINTS.paymentMethodsVisibles, {}, tokenStore)
+      await checkResponse(response, 'Error al cargar métodos de pago')
+
+      const data = await response.json()
+      allPaymentMethods.value = Array.isArray(data) ? data : data.results || []
+      page.value = 1
+      applyPagination()
+
+      return data
+    } catch (err) {
+      error.value = err.message || 'Error al cargar métodos de pago'
+      throw err
+    } finally {
+      loading.value = false
+    }
+  }
+
   async function createPaymentMethod(payload) {
     loading.value = true
     error.value = null
@@ -152,6 +173,7 @@ export const usePaymentMethodStore = defineStore('paymentMethods', () => {
     pageSize,
     totalPages,
     fetchPaymentMethods,
+    fetchPaymentMethodsVisibles,
     createPaymentMethod,
     updatePaymentMethod,
     deletePaymentMethod,

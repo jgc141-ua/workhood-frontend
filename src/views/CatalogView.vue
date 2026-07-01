@@ -1,6 +1,6 @@
 <script setup>
-import { onMounted, ref } from 'vue'
-import { IonPage, IonContent } from '@ionic/vue'
+import { ref } from 'vue'
+import { IonPage, IonContent, onIonViewWillEnter } from '@ionic/vue'
 import MobileHeader from '@/components/MobileHeader.vue'
 import AppModal from '@/components/AppModal.vue'
 import MembershipTypesSection from '@/components/sections/MembershipTypesSection.vue'
@@ -67,11 +67,13 @@ function addPaymentMethod() {
   isCreatePaymentMethodOpen.value = true
 }
 
-// Carga inicial de los cuatro catálogos
-onMounted(async () => {
+// Carga inicial de los cinco catálogos
+onIonViewWillEnter(async () => {
   if (!authStore.isAuthenticated) return
 
   const promises = []
+
+  promises.push(resourceStore.fetchResources().catch(() => { }))
 
   if (!membershipTypeStore.membershipTypes.length) {
     promises.push(membershipTypeStore.fetchMembershipTypes().catch(() => { }))
@@ -82,9 +84,7 @@ onMounted(async () => {
   if (!resourceTypeStore.resourceTypes.length) {
     promises.push(resourceTypeStore.fetchResourceTypes().catch(() => { }))
   }
-  if (!resourceStore.resources.length) {
-    promises.push(resourceStore.fetchResources().catch(() => { }))
-  }
+
   if (!paymentMethodStore.allPaymentMethods.length) {
     promises.push(paymentMethodStore.fetchPaymentMethods().catch(() => { }))
   }

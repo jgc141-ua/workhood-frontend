@@ -224,7 +224,7 @@ async function loadSchedules() {
 async function loadInitialData() {
   if (!authStore.isAuthenticated) return
   if (!resourceStore.resources.length) {
-    await resourceStore.fetchResources({ page_size: 100 })
+    await resourceStore.fetchBookableResources({ page_size: 100 })
   }
   await Promise.all([
     loadSchedules(),

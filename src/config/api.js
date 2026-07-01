@@ -46,6 +46,7 @@ export const ENDPOINTS = {
 
   // Resources
   resources: BASE + '/resources/all/',
+  bookableResources: BASE + '/resources/bookable/',
   resourceCreate: BASE + '/resources/create/',
   resourceUpdate: BASE + '/resources/update/',
   resourceDelete: BASE + '/resources/delete/',
@@ -72,6 +73,7 @@ export const ENDPOINTS = {
 
   // PaymentMethods
   paymentMethods: BASE + '/payment-methods/all/',
+  paymentMethodsVisibles: BASE + '/payment-methods/all-visible/',
   paymentMethodCreate: BASE + '/payment-methods/create/',
   paymentMethodUpdate: BASE + '/payment-methods/update/',
   paymentMethodDelete: BASE + '/payment-methods/delete/',

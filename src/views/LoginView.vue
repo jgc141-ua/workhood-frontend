@@ -56,7 +56,7 @@ async function handleLogin() {
           <p class="sub-auth">
             ¿No tienes una cuenta? <a href="/register" class="textLink">Regístrate</a>
             <br />
-            ¿Has olvidado tu contraseña? <a href="/forgot-password" class="textLink">Recupera tu contraseña</a>
+            <!--¿Has olvidado tu contraseña? <a href="/forgot-password" class="textLink">Recupera tu contraseña</a> -->
           </p>
         </div>
       </div>

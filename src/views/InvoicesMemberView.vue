@@ -141,7 +141,7 @@ onMounted(async () => {
   if (!authStore.isAuthenticated) return
   await loadInvoices()
   if (!paymentMethodStore.allPaymentMethods.length) {
-    paymentMethodStore.fetchPaymentMethods().catch(() => { })
+    paymentMethodStore.fetchPaymentMethodsVisibles().catch(() => { })
   }
 })
 </script>

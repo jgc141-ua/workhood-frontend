@@ -115,9 +115,8 @@ const canSubmit = computed(() => {
 })
 
 onMounted(() => {
-  if (!resourceStore.resources.length) {
-    resourceStore.fetchResources().catch(() => { })
-  }
+  resourceStore.fetchBookableResources().catch(() => { })
+
   // Pre-carga la primera página de miembros
   if (props.isAdmin && !membersStore.members.length) {
     membersStore.fetchMembers({ page: 1, pageSize: 10 }).catch(() => { })

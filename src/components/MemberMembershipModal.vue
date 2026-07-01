@@ -24,7 +24,7 @@ const props = defineProps({
 const emit = defineEmits(['close'])
 
 // Formatea una fecha para mostrarla en pantalla
-const { formatDDMMYYYY: formatDate } = useDateFormat()
+const { formatDDMMYYYY } = useDateFormat()
 
 // Formatea un precio con dos decimales
 function formatPrice(value) {

@@ -66,6 +66,41 @@ export const useResourceStore = defineStore('resources', () => {
     }
   }
 
+  async function fetchBookableResources(params = {}) {
+    loading.value = true
+    error.value = null
+    try {
+      const currentPage = params.page ?? page.value
+      const currentPageSize = params.pageSize ?? pageSize.value
+
+      const query = new URLSearchParams()
+      query.set('page', currentPage)
+      query.set('page_size', currentPageSize)
+
+      const response = await apiFetch(
+        `${ENDPOINTS.bookableResources}?${query.toString()}`,
+        {},
+        tokenStore,
+      )
+      await checkResponse(response, 'Error al cargar recursos')
+
+      const data = await response.json()
+      resources.value = data.results || []
+      count.value = data.count || 0
+      next.value = data.next
+      previous.value = data.previous
+      page.value = currentPage
+      pageSize.value = currentPageSize
+
+      return data
+    } catch (err) {
+      error.value = err.message || 'Error al cargar recursos'
+      throw err
+    } finally {
+      loading.value = false
+    }
+  }
+
   async function createResource(payload) {
     loading.value = true
     error.value = null
@@ -171,6 +206,7 @@ export const useResourceStore = defineStore('resources', () => {
     hasNextPage,
     hasPreviousPage,
     fetchResources,
+    fetchBookableResources,
     createResource,
     updateResource,
     deleteResource,
