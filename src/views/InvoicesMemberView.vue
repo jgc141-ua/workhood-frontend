@@ -13,6 +13,7 @@ import { useInvoiceStore } from '@/stores/invoiceStore'
 import { usePaymentMethodStore } from '@/stores/paymentMethodStore'
 import { useAuthStore } from '@/stores/authStore'
 import { showToast } from '@/composables/toast'
+import { useDateFormat } from '@/composables/useDateFormat'
 
 const invoiceStore = useInvoiceStore()
 const paymentMethodStore = usePaymentMethodStore()
@@ -106,15 +107,12 @@ function nextPage() {
   if (invoiceStore.myNext) loadInvoices(invoiceStore.myPage + 1)
 }
 
-function formatDate(value) {
-  if (!value) return '-'
-  return new Date(value).toLocaleDateString('es-ES')
-}
-
 function formatPrice(value) {
   if (value == null) return '-'
   return `${Number(value).toFixed(2)} €`
 }
+
+const { formatDDMMYYYY, formatDDMMYYYYHHMM } = useDateFormat()
 
 function openPayModal(invoice) {
   invoiceToPay.value = invoice
@@ -172,8 +170,8 @@ onMounted(async () => {
           <div class="invoice-card-main" @click="openDetail(invoice)">
             <h3 class="invoice-card-number">{{ invoice.invoice_number }}</h3>
             <p class="invoice-card-concept text-truncate">{{ invoice.concept }}</p>
-            <p class="invoice-card-date">Emitida: {{ formatDate(invoice.issue_date) }}</p>
-            <p class="invoice-card-date">Vencimiento: {{ formatDate(invoice.due_date) }}</p>
+            <p class="invoice-card-date">Emitida: {{ formatDDMMYYYYHHMM(invoice.issue_date) }}</p>
+            <p class="invoice-card-date">Vencimiento: {{ formatDDMMYYYYHHMM(invoice.due_date) }}</p>
           </div>
           <div class="invoice-card-aside">
             <span class="invoice-badge" :class="`invoice-badge--${invoice.state.toLowerCase()}`">

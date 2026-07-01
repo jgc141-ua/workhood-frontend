@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useClickOutside } from '@/composables/useClickOutside'
 import IconDropdown from '@/assets/icons/IconDropdown.vue'
 
@@ -38,7 +38,7 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['update:modelValue'])
+const emit = defineEmits(['update:modelValue', 'update:search'])
 
 const isOpen = ref(false)
 const search = ref('')
@@ -57,17 +57,26 @@ const filteredOptions = computed(() => {
   )
 })
 
+// Emite el término de búsqueda al padre para búsquedas remotas
+watch(search, (value) => {
+  emit('update:search', value)
+})
+
 // Abre o cierra el dropdown
 function toggle() {
   if (props.disabled) return
   isOpen.value = !isOpen.value
-  if (isOpen.value) search.value = ''
+  if (isOpen.value) {
+    search.value = ''
+    emit('update:search', '')
+  }
 }
 
 // Selecciona una opción y cierra el dropdown
 function select(option) {
   emit('update:modelValue', option.value)
   search.value = ''
+  emit('update:search', '')
   isOpen.value = false
 }
 

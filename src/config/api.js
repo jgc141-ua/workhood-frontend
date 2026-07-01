@@ -87,4 +87,15 @@ export const ENDPOINTS = {
   invoiceCancel: BASE + '/invoices/cancel/',
   myInvoicePdf: BASE + '/invoices/my-pdf/',
   adminInvoicePdf: BASE + '/invoices/pdf/',
+
+  // Occupancy
+  occupancyCurrent: BASE + '/occupancy/current/',
+  occupancyActiveReservations: BASE + '/occupancy/active-reservations/',
+  occupancyDailyEvolution: BASE + '/occupancy/daily-evolution/',
+  occupancyUsersSummary: BASE + '/occupancy/users-summary/',
+  occupancyResourcesSummary: BASE + '/occupancy/resources-summary/',
+
+  // Reports
+  reportsRevenue: BASE + '/reports/revenue/',
+  reportsRevenueExport: BASE + '/reports/revenue-export/',
 }

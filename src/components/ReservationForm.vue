@@ -1,10 +1,11 @@
 <script setup>
-import { ref, watch, computed, onMounted } from 'vue'
+import { ref, watch, computed, onMounted, onBeforeUnmount } from 'vue'
 import FormInput from '@/components/forms/FormInput.vue'
 import PrettyInputSelector from '@/components/PrettyInputSelector.vue'
 import FormActions from '@/components/forms/FormActions.vue'
 import { useResourceStore } from '@/stores/resourceStore'
 import { useReservationStore } from '@/stores/reservationStore'
+import { useMembersStore } from '@/stores/memberStore'
 import { showToast } from '@/composables/toast'
 
 const props = defineProps({
@@ -24,14 +25,20 @@ const props = defineProps({
     type: String,
     default: '',
   },
+  isAdmin: {
+    type: Boolean,
+    default: false,
+  },
 })
 
 const emit = defineEmits(['reserved', 'cancel'])
 
 const resourceStore = useResourceStore()
 const reservationStore = useReservationStore()
+const membersStore = useMembersStore()
 
 const resourceId = ref(props.initialResource ? Number(props.initialResource) : '')
+const selectedUserEmail = ref('')
 const reservationType = ref('HOURLY')
 const startTime = ref('')
 const endTime = ref('')
@@ -39,6 +46,8 @@ const dailyDate = ref('')
 const recurrenceEndDate = ref('')
 const availability = ref(null)
 const checkingAvailability = ref(false)
+const userSearchLoading = ref(false)
+let userSearchDebounce = null
 
 function defaultDatetime(date, time) {
   return date ? `${date}T${time}` : ''
@@ -61,6 +70,7 @@ function addMinutes(datetime, minutes) {
 function initializeForm() {
   const now = nowRounded()
   resourceId.value = props.initialResource ? Number(props.initialResource) : ''
+  selectedUserEmail.value = ''
   reservationType.value = 'HOURLY'
   startTime.value = props.initialStartTime || now
   endTime.value = props.initialEndTime || addMinutes(startTime.value, 60)
@@ -82,9 +92,17 @@ const resourceOptions = computed(() =>
   resourceStore.resources.map((r) => ({ value: r.id, label: `${r.name} (${r.capacity} pers.)` })),
 )
 
+const userOptions = computed(() =>
+  membersStore.members.map((m) => ({
+    value: m.email,
+    label: `${m.first_name} ${m.last_name} (${m.email})`,
+  })),
+)
+
 const nowIso = computed(() => new Date().toISOString().slice(0, 16))
 
 const canSubmit = computed(() => {
+  if (props.isAdmin && !selectedUserEmail.value) return false
   if (!resourceId.value) return false
   if (reservationType.value === 'DAILY') {
     if (!dailyDate.value) return false
@@ -100,7 +118,48 @@ onMounted(() => {
   if (!resourceStore.resources.length) {
     resourceStore.fetchResources().catch(() => { })
   }
+  // Pre-carga la primera página de miembros
+  if (props.isAdmin && !membersStore.members.length) {
+    membersStore.fetchMembers({ page: 1, pageSize: 10 }).catch(() => { })
+  }
 })
+
+onBeforeUnmount(() => {
+  if (userSearchDebounce) clearTimeout(userSearchDebounce)
+})
+
+// Búsqueda remota de usuarios por email (solo cuando se abre desde admin)
+async function onUserSearch(query) {
+  if (!props.isAdmin) return
+  if (userSearchDebounce) clearTimeout(userSearchDebounce)
+
+  const trimmed = (query || '').trim()
+
+  // Apertura del dropdown
+  if (!trimmed) {
+    userSearchLoading.value = true
+    try {
+      await membersStore.fetchMembers({ page: 1, pageSize: 10 })
+    } catch {
+      membersStore.clearMembers()
+    } finally {
+      userSearchLoading.value = false
+    }
+    return
+  }
+
+  // Búsqueda con texto
+  userSearchDebounce = setTimeout(async () => {
+    userSearchLoading.value = true
+    try {
+      await membersStore.fetchMembers({ page: 1, pageSize: 10, search: trimmed })
+    } catch {
+      membersStore.clearMembers()
+    } finally {
+      userSearchLoading.value = false
+    }
+  }, 300)
+}
 
 function reset() {
   initializeForm()
@@ -169,6 +228,10 @@ async function handleSubmit() {
     end_time: payloadEndTime,
   }
 
+  if (props.isAdmin && selectedUserEmail.value) {
+    payload.user_email = selectedUserEmail.value
+  }
+
   if (['WEEKLY', 'MONTHLY'].includes(reservationType.value)) {
     payload.recurrence_end_date = recurrenceEndDate.value
   }
@@ -186,6 +249,10 @@ async function handleSubmit() {
 
 <template>
   <form class="reservation-form" @submit.prevent="handleSubmit">
+    <PrettyInputSelector v-if="isAdmin" v-model="selectedUserEmail" label="Miembro" :options="userOptions"
+      placeholder="Selecciona un miembro" search-placeholder="Buscar por email..." required
+      :disabled="userSearchLoading" @update:search="onUserSearch" />
+
     <PrettyInputSelector v-model="resourceId" label="Recurso" :options="resourceOptions"
       placeholder="Selecciona un recurso" search-placeholder="Buscar recurso..." required />
 

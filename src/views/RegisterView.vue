@@ -1,12 +1,15 @@
 <script setup>
 import { inject } from 'vue'
-import { IonPage, IonContent, IonButton } from '@ionic/vue'
+import { IonPage, IonContent } from '@ionic/vue'
 import { useAuthStore } from '@/stores/authStore'
 import { showToast } from '@/composables/toast'
 import RegisterForm from '@/components/forms/RegisterForm.vue'
+import { useRouter } from 'vue-router'
 
 const brand = inject('BRAND')
 const auth = useAuthStore()
+
+const router = useRouter()
 
 async function handleRegister(formData) {
   const ok = await auth.register(formData)
@@ -15,6 +18,8 @@ async function handleRegister(formData) {
     const message = errs?.email || errs?.register || 'Error al enviar la solicitud. Por favor, inténtalo de nuevo.'
     showToast(message)
   }
+
+  await router.push('/login')
 }
 </script>
 
@@ -23,30 +28,15 @@ async function handleRegister(formData) {
     <ion-content :fullscreen="true">
       <div class="page page-auth">
         <div class="card-base auth-card auth-card-wide">
-          <template v-if="auth.success">
-            <h2 class="heading-auth">Solicitud enviada</h2>
-            <br>
-            <p class="sub-auth">
-              Tu cuenta está <strong>pendiente de aprobación</strong>.
-              <br />
-              {{ brand }} revisará tu solicitud y recibirás un email de confirmación.
-            </p>
-            <ion-button href="/login" class="btn-primary" expand="block">
-              Volver al inicio de sesión
-            </ion-button>
-          </template>
+          <h2 class="heading-auth">Crear cuenta</h2>
+          <span class="brand-auth">en {{ brand }}</span>
+          <p class="sub-auth">Completa tus datos para acceder al espacio</p>
 
-          <template v-else>
-            <h2 class="heading-auth">Crear cuenta</h2>
-            <span class="brand-auth">en {{ brand }}</span>
-            <p class="sub-auth">Completa tus datos para solicitar acceso al espacio</p>
+          <RegisterForm @submit="handleRegister" />
 
-            <RegisterForm @submit="handleRegister" />
-
-            <p class="sub-auth">
-              ¿Ya tienes cuenta? <a href="/login" class="textLink">Inicia sesión</a>
-            </p>
-          </template>
+          <p class="sub-auth">
+            ¿Ya tienes cuenta? <a href="/login" class="textLink">Inicia sesión</a>
+          </p>
         </div>
       </div>
     </ion-content>

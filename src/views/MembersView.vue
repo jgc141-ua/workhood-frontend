@@ -470,8 +470,10 @@ onIonViewWillEnter(async () => {
           </template>
 
           <template #cell-contact="{ item }">
-            <div class="data-table-text">{{ item.email || '-' }}</div>
-            <div class="data-table-text">{{ item.phone || '-' }}</div>
+            <div>
+              <div class="data-table-text">{{ item.email || '-' }}</div>
+              <div class="data-table-text">{{ item.phone || '-' }}</div>
+            </div>
           </template>
 
           <template #cell-nif="{ item }">

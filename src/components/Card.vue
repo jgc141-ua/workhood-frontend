@@ -1,19 +1,21 @@
 <script setup>
+import { RouterLink } from 'vue-router'
+import { computed } from 'vue'
+
 const props = defineProps({
   label: String,
   value: String,
-  delta: String,
+  to: { type: [String, Object], default: null },
 })
+
+const tag = computed(() => (props.to ? RouterLink : 'div'))
 </script>
 
 <template>
-  <div class="card">
+  <component :is="tag" :to="to" class="card" :class="{ clickable: !!to }">
     <p class="label">{{ props.label }}</p>
-    <div class="valueRow">
-      <strong class="value">{{ props.value }}</strong>
-      <span v-if="props.delta" class="delta">{{ props.delta }}</span>
-    </div>
-  </div>
+    <strong class="value">{{ props.value }}</strong>
+  </component>
 </template>
 
 <style scoped>
@@ -23,34 +25,26 @@ const props = defineProps({
   color: #4f5968;
 }
 
-.valueRow {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-}
-
 .value {
   font-size: 26px;
   line-height: 1;
   color: #003544;
 }
 
-.delta {
-  font-size: 15px;
-  color: #006c4f;
+.card.clickable {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
-@media (max-width: 1180px) {
-  .valueRow {
-    flex-direction: column;
-  }
+.card.clickable:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(26, 28, 30, 0.1);
 }
 
 @media (max-width: 600px) {
-  .valueRow {
-    flex-direction: column;
-  }
-
   .label {
     font-size: 15px;
     margin-bottom: 8px;

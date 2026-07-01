@@ -16,6 +16,7 @@ const props = defineProps({
       price: '',
       availability: true,
       is_active: true,
+      is_bookable: true,
       resource_type: '',
     }),
   },
@@ -40,6 +41,7 @@ const form = ref({
   price: '',
   availability: true,
   is_active: true,
+  is_bookable: true,
   resource_type: '',
 })
 
@@ -52,6 +54,7 @@ function syncForm(val) {
     price: val.price ?? '',
     availability: val.availability !== false,
     is_active: val.is_active !== false,
+    is_bookable: val.is_bookable !== false,
     resource_type: val.resource_type ?? '',
   }
 }
@@ -87,6 +90,7 @@ function handleSubmit() {
     price: Number(form.value.price),
     availability: !!form.value.availability,
     is_active: !!form.value.is_active,
+    is_bookable: !!form.value.is_bookable,
     resource_type: Number(form.value.resource_type),
   }
 
@@ -109,11 +113,13 @@ function handleSubmit() {
 
     <FormInput v-model="form.capacity" label="Capacidad" type="number" min="1" placeholder="Ej: 8" required />
 
-    <FormInput v-model="form.price" label="Precio por hora (€)" type="number" min="0" step="0.01" placeholder="Ej: 15.50" required />
+    <FormInput v-model="form.price" label="Precio por hora (€)" type="number" min="0" step="0.01"
+      placeholder="Ej: 15.50" required />
 
     <div class="field checkbox-group">
       <PrettyCheckbox v-model="form.availability" text="Disponible" />
       <PrettyCheckbox v-model="form.is_active" text="Activo" />
+      <PrettyCheckbox v-model="form.is_bookable" text="Reservable" />
     </div>
 
     <FormActions :submit-label="isEdit ? 'Guardar cambios' : 'Crear'" :disabled="!canSubmit" @cancel="emit('cancel')" />

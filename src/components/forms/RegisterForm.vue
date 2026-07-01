@@ -152,7 +152,7 @@ watch(
                 <ion-button v-if="step !== 4" type="button" class="btn-primary" :disabled="!isStepValid"
                     @click="next()">Siguiente</ion-button>
                 <ion-button v-if="step === 4" type="submit" class="btn-primary"
-                    :disabled="!isStepValid">Solicitar</ion-button>
+                    :disabled="!isStepValid">Registrarme</ion-button>
             </div>
         </form>
     </div>

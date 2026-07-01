@@ -35,6 +35,9 @@ export const useReservationStore = defineStore('reservations', () => {
   const isCancelModalOpen = ref(false)
   const reservationToCancel = ref(null)
 
+  // Modal global de "nueva reserva" disparado desde el sidebar
+  const isNewReservationModalOpen = ref(false)
+
   const tokenStore = useTokenStore()
 
   async function setMyPage(newPage) {
@@ -63,7 +66,11 @@ export const useReservationStore = defineStore('reservations', () => {
       if (params.resource_type) query.set('resource_type', params.resource_type)
       if (params.upcoming != null) query.set('upcoming', params.upcoming)
 
-      const response = await apiFetch(`${ENDPOINTS.myReservations}?${query.toString()}`, {}, tokenStore)
+      const response = await apiFetch(
+        `${ENDPOINTS.myReservations}?${query.toString()}`,
+        {},
+        tokenStore,
+      )
       await checkResponse(response, 'Error al cargar tus reservas')
 
       const data = await response.json()
@@ -179,6 +186,14 @@ export const useReservationStore = defineStore('reservations', () => {
     reservationToCancel.value = null
   }
 
+  function openNewReservationModal() {
+    isNewReservationModalOpen.value = true
+  }
+
+  function closeNewReservationModal() {
+    isNewReservationModalOpen.value = false
+  }
+
   async function confirmCancel(onSuccess) {
     if (!reservationToCancel.value) return
 
@@ -282,6 +297,7 @@ export const useReservationStore = defineStore('reservations', () => {
     error,
     isCancelModalOpen,
     reservationToCancel,
+    isNewReservationModalOpen,
     fetchMyReservations,
     fetchRecentReservations,
     fetchAllReservations,
@@ -292,6 +308,8 @@ export const useReservationStore = defineStore('reservations', () => {
     openCancelModal,
     closeCancelModal,
     resetCancelModal,
+    openNewReservationModal,
+    closeNewReservationModal,
     confirmCancel,
     checkAvailability,
     fetchResourceSchedule,

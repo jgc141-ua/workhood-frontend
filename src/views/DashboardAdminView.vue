@@ -1,13 +1,14 @@
 <script setup>
 import { computed, inject, onMounted, ref } from 'vue'
 
-import { Bar } from 'vue-chartjs'
+import { Line } from 'vue-chartjs'
 import {
   Chart as ChartJS,
   Title,
   Tooltip,
   Legend,
-  BarElement,
+  PointElement,
+  LineElement,
   CategoryScale,
   LinearScale,
 } from 'chart.js'
@@ -19,19 +20,35 @@ import DataTableList from '@/components/DataTableList.vue'
 import { useMeStore } from '@/stores/meStore'
 import { useAccessStore } from '@/stores/accessStore'
 import { useAuthStore } from '@/stores/authStore'
+import { usePaymentMethodStore } from '@/stores/paymentMethodStore'
+import { useAnalyticsStore } from '@/stores/analyticsStore'
+import { useDateFormat } from '@/composables/useDateFormat'
 import SpaceScheduleSection from '@/components/sections/SpaceScheduleSection.vue'
+import PaymentMethodsSection from '@/components/sections/PaymentMethodsSection.vue'
+
+ChartJS.register(Title, Tooltip, Legend, PointElement, LineElement, CategoryScale, LinearScale)
 
 const meStore = useMeStore()
 const accessStore = useAccessStore()
+const { formatDDMMYYYYHHMM } = useDateFormat()
 const authStore = useAuthStore()
+const paymentMethodStore = usePaymentMethodStore()
+const analyticsStore = useAnalyticsStore()
 const router = useRouter()
 
 const spaceScheduleRef = ref(null)
+const paymentMethodRef = ref(null)
 const recentAccesses = ref([])
 
 onMounted(() => {
   if (!authStore.isAuthenticated) return
   loadRecentAccesses()
+  if (!paymentMethodStore.allPaymentMethods.length) {
+    paymentMethodStore.fetchPaymentMethods().catch(() => { })
+  }
+  analyticsStore.fetchAnalyticsSummary()
+  // Carga la tendencia anual para la card del dashboard
+  loadAnnualTrend()
 })
 
 async function loadRecentAccesses() {
@@ -43,51 +60,61 @@ async function loadRecentAccesses() {
   }
 }
 
-ChartJS.register(Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale)
+function loadAnnualTrend() {
+  const today = new Date().toISOString().split('T')[0]
+  analyticsStore.fetchRevenue('month', today).catch(() => { })
+}
 
-const props = defineProps({
-  datos: {
-    type: Array,
-    default: () => [
-      { mes: 'Enero', valor: 1200 },
-      { mes: 'Febrero', valor: 980 },
-      { mes: 'Marzo', valor: 1450 },
-      { mes: 'Abril', valor: 1320 },
-      { mes: 'Mayo', valor: 1750 },
-      { mes: 'Junio', valor: 1100 },
-      { mes: 'Julio', valor: 1600 },
-      { mes: 'Agosto', valor: 1380 },
-      { mes: 'Septiembre', valor: 1900 },
-      { mes: 'Octubre', valor: 2100 },
-      { mes: 'Noviembre', valor: 2400 },
-      { mes: 'Diciembre', valor: 2800 },
-    ],
+const stats = computed(() => [
+  { label: 'Personas dentro', value: String(analyticsStore.activeCheckinsCount), to: '/reports' },
+  {
+    label: 'Recursos en uso',
+    value: `${analyticsStore.resourcesSummary.resources_active}/${analyticsStore.resourcesSummary.resources_total}`,
+    to: '/reports',
   },
-})
+  {
+    label: 'Usuarios Activos',
+    value: String(analyticsStore.usersSummary.members_total),
+    to: '/reports',
+  },
+])
 
-const stats = [
-  { label: 'Desk Occupancy', value: '100%', delta: '+2000%' },
-  { label: 'Rooms in Use', value: '12000/15500', delta: '+1000' },
-  { label: 'Active Members', value: '50000', delta: '+12' },
-]
-
-const chartData = computed(() => ({
-  labels: props.datos.map((d) => d.mes),
+// Gráfica de tendencia (mismo formato que ReportsView)
+const trendData = computed(() => ({
+  labels: analyticsStore.revenue.trend.map(t => {
+    const [y, m] = t.month.split('-')
+    return `${m}-${y}`
+  }),
   datasets: [
     {
-      label: 'Ventas mensuales',
-      backgroundColor: '#01696f',
-      data: props.datos.map((d) => d.valor),
+      label: 'Facturado',
+      data: analyticsStore.revenue.trend.map(t => t.facturado),
+      borderColor: '#003544',
+      backgroundColor: 'rgba(0, 53, 68, 0.1)',
+      fill: false,
+      tension: 0.3,
+    },
+    {
+      label: 'Cobrado',
+      data: analyticsStore.revenue.trend.map(t => t.cobrado),
+      borderColor: '#01696f',
+      backgroundColor: 'rgba(1, 105, 111, 0.1)',
+      fill: false,
+      tension: 0.3,
     },
   ],
 }))
 
-const chartOptions = {
+const trendOptions = {
   responsive: true,
-  plugins: {
-    legend: { position: 'top' },
-    title: { display: true, text: 'Reporte de ventas' },
-  },
+  maintainAspectRatio: false,
+  plugins: { legend: { position: 'bottom' } },
+  scales: { y: { beginAtZero: true } },
+}
+
+function formatPrice(value) {
+  if (value == null) return '-'
+  return `${Number(value).toFixed(2)} €`
 }
 
 const brand = inject('BRAND')
@@ -109,24 +136,26 @@ const brand = inject('BRAND')
       </section>
 
       <section class="statsGrid">
-        <Card v-for="stat in stats" :key="stat.label" :label="stat.label" :value="stat.value" :delta="stat.delta" />
+        <Card v-for="stat in stats" :key="stat.label" :label="stat.label" :value="stat.value" :to="stat.to" />
       </section>
 
       <SpaceScheduleSection ref="spaceScheduleRef" class="dashboard-schedule-section" />
 
       <section class="contentGrid">
         <div>
-          <section class="card panel">
+          <section class="card panel revenue-trend-card" @click="router.push('/reports')" role="button" tabindex="0"
+            @keydown.enter="router.push('/reports')">
             <div class="header">
               <div>
-                <h3>Revenue Growth</h3>
-                <p>Monthly recurring revenue vs ad-hoc bookings</p>
+                <h3>Tendencia de ingresos</h3>
+                <p>Facturado y cobrado</p>
               </div>
-              <button class="pill-button" type="button">This Year <span>⌄</span></button>
+              <span class="pill-button">Último mes</span>
             </div>
-            <div class="chart-wrapper">
-              <Bar :data="chartData" :options="chartOptions" />
+            <div v-if="analyticsStore.revenue.trend.length" class="chart-wrapper">
+              <Line :data="trendData" :options="trendOptions" />
             </div>
+            <p v-else class="empty-state">No hay datos de tendencia.</p>
           </section>
         </div>
 
@@ -146,7 +175,7 @@ const brand = inject('BRAND')
                     </span>
                   </div>
                   <p class="access-row-user">{{ item.user_name }}</p>
-                  <p class="access-row-date">{{ item.event ? new Date(item.event).toLocaleString('es-ES') : '-' }}</p>
+                  <p class="access-row-date">{{ formatDDMMYYYYHHMM(item.event) }}</p>
                 </div>
               </template>
             </DataTableList>
@@ -279,7 +308,23 @@ const brand = inject('BRAND')
   padding-top: var(--space-3);
 }
 
+.revenue-trend-card {
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.revenue-trend-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(26, 28, 30, 0.1);
+}
+
+.revenue-trend-card .chart-wrapper {
+  min-height: 400px;
+  position: relative;
+}
+
 @media (max-width: 1024px) {
+
   .statsGrid {
     grid-template-columns: repeat(2, 1fr);
   }

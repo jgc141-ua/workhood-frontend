@@ -11,15 +11,16 @@ import { useAccessStore } from '@/stores/accessStore'
 import { useReservationStore } from '@/stores/reservationStore'
 import { useAuthStore } from '@/stores/authStore'
 import { showToast } from '@/composables/toast'
+import { useDateFormat } from '@/composables/useDateFormat'
 
 const meStore = useMeStore()
+const { formatDDMMYYYY, formatDDMMYYYYHHMM } = useDateFormat()
 const membershipStore = useMembershipStore()
 const accessStore = useAccessStore()
 const reservationStore = useReservationStore()
 const authStore = useAuthStore()
 
 const isSubscribeModalOpen = ref(false)
-const accessMessage = ref('')
 const page = ref(1)
 const pageSize = ref(5)
 const lastAccess = ref(null)
@@ -85,7 +86,6 @@ async function handleCheckIn() {
     const data = await accessStore.checkIn()
     lastAccess.value = data
     const resultText = data.result === 'PERMITIDO' ? 'permitido' : 'denegado'
-    accessMessage.value = `Entrada ${resultText}`
     showToast(`Acceso ${resultText}`, data.result === 'PERMITIDO' ? 'success' : 'danger')
     await loadMyAccesses(1)
   } catch (err) {
@@ -97,7 +97,6 @@ async function handleCheckOut() {
   try {
     const data = await accessStore.checkOut()
     lastAccess.value = data
-    accessMessage.value = 'Salida registrada'
     showToast('Salida registrada', 'success')
     await loadMyAccesses(1)
   } catch (err) {
@@ -136,8 +135,6 @@ const brand = inject('BRAND')
         </div>
       </section>
 
-      <p v-if="accessMessage" class="access-message">{{ accessMessage }}</p>
-
       <SubscribeMembershipModal :show="isSubscribeModalOpen" @close="closeSubscribeModal" @subscribed="onSubscribed" />
 
       <section v-if="!membershipStore.loading && !membershipStore.hasActiveMembership" class="card membership-alert">
@@ -165,8 +162,8 @@ const brand = inject('BRAND')
             </p>
           </div>
           <div class="membership-active-meta">
-            <span class="pill-button pill-button-success pill-subscribe">Activa hasta {{ new
-              Date(membershipStore.myMembership.end_date).toLocaleDateString() }}</span>
+            <span class="pill-button pill-button-success pill-subscribe">Activa hasta
+              {{ formatDDMMYYYY(membershipStore.myMembership.end_date) }}</span>
             <button type="button" class="pill-button pill-subscribe auto-renew-btn"
               :class="membershipStore.myMembership.auto_renew ? 'pill-button-success' : 'pill-button-warn'"
               :disabled="membershipStore.loading" @click="handleToggleAutoRenew">
@@ -217,7 +214,7 @@ const brand = inject('BRAND')
               <div class="access-row">
                 <div class="access-main">
                   <span class="access-type">{{ item.type === 'ENTRADA' ? 'Entrada' : 'Salida' }}</span>
-                  <span class="access-date">{{ item.event ? new Date(item.event).toLocaleString('es-ES') : '-' }}</span>
+                  <span class="access-date">{{ formatDDMMYYYYHHMM(item.event) }}</span>
                 </div>
                 <span class="access-result" :class="item.result.toLowerCase()">
                   {{ item.result === 'PERMITIDO' ? 'Permitido' : 'Denegado' }}
@@ -251,12 +248,6 @@ const brand = inject('BRAND')
 .access-buttons {
   display: flex;
   gap: var(--space-3);
-}
-
-.access-message {
-  margin: 0 0 var(--space-4);
-  font-size: 0.9rem;
-  color: #6b7280;
 }
 
 .membership-alert,

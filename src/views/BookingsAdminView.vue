@@ -3,8 +3,10 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { IonContent } from '@ionic/vue'
 import MobileHeader from '@/components/MobileHeader.vue'
 import DataTableColumns from '@/components/DataTableColumns.vue'
+import AppModal from '@/components/AppModal.vue'
 import ConfirmModal from '@/components/ConfirmModal.vue'
 import MoreActionsButton from '@/components/MoreActionsButton.vue'
+import ReservationForm from '@/components/ReservationForm.vue'
 import ReservationFilters from '@/components/ReservationFilters.vue'
 import ReservationDateRange from '@/components/ReservationDateRange.vue'
 import IconTrash from '@/assets/icons/IconTrash.vue'
@@ -17,6 +19,7 @@ const authStore = useAuthStore()
 
 const selectedState = ref('all')
 const selectedTime = ref('upcoming')
+const isNewReservationModalOpen = ref(false)
 
 const stateLabels = {
   Pending: 'Pendiente',
@@ -101,9 +104,35 @@ watch([selectedState, selectedTime], () => {
   loadReservations(1)
 })
 
+// Abre el modal de "Nueva reserva" cuando se solicita desde el sidebar (admin)
+function openNewReservation() {
+  isNewReservationModalOpen.value = true
+  reservationStore.closeNewReservationModal()
+  loadReservations()
+}
+
+// Si el admin pulsa el botón estando ya en /bookings
+watch(() => reservationStore.isNewReservationModalOpen, (isOpen) => {
+  if (isOpen) openNewReservation()
+})
+
+function closeNewReservationModal() {
+  isNewReservationModalOpen.value = false
+}
+
+async function onNewReserved() {
+  closeNewReservationModal()
+  await loadReservations()
+}
+
 onMounted(() => {
   if (!authStore.isAuthenticated) return
-  loadReservations()
+  // Si la vista se monta con la petición ya pendiente (admin venía de otra ruta)
+  if (reservationStore.isNewReservationModalOpen) {
+    openNewReservation()
+  } else {
+    loadReservations()
+  }
 })
 </script>
 
@@ -123,6 +152,11 @@ onMounted(() => {
         :item-name="reservationStore.reservationToCancel?.resource_name" confirm-label="Cancelar reserva" confirm-danger
         @confirm="handleConfirmCancel" @close="reservationStore.closeCancelModal"
         @after-close="reservationStore.resetCancelModal" />
+
+      <AppModal :show="isNewReservationModalOpen" title="Nueva reserva" @close="closeNewReservationModal">
+        <ReservationForm :key="`new-reservation-${isNewReservationModalOpen}`" is-admin @reserved="onNewReserved"
+          @cancel="closeNewReservationModal" />
+      </AppModal>
 
       <ReservationFilters v-model:state="selectedState" v-model:time="selectedTime" />
 

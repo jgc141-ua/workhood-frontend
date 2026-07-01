@@ -11,6 +11,7 @@ import PrettyCheckbox from '@/components/PrettyCheckbox.vue'
 import FormActions from '@/components/forms/FormActions.vue'
 import { useSpaceScheduleStore } from '@/stores/spaceScheduleStore'
 import { showToast } from '@/composables/toast'
+import { useDateFormat } from '@/composables/useDateFormat'
 
 const spaceScheduleStore = useSpaceScheduleStore()
 
@@ -147,6 +148,8 @@ async function handleDelete() {
   closeDeleteModal()
 }
 
+const { formatDDMMYYYY, formatDDMMYYYYHHMM } = useDateFormat()
+
 defineExpose({
   openCreateModal
 })
@@ -188,8 +191,11 @@ defineExpose({
         total: spaceScheduleStore.count,
       }" @prev-page="spaceScheduleStore.setPage(spaceScheduleStore.page - 1)"
       @next-page="spaceScheduleStore.setPage(spaceScheduleStore.page + 1)">
+      <template #cell-start_date="{ item }">
+        {{ formatDDMMYYYY(item.start_date) }}
+      </template>
       <template #cell-end_date="{ item }">
-        {{ item.end_date || 'Indefinido' }}
+        {{ item.end_date ? formatDDMMYYYY(item.end_date) : 'Indefinido' }}
       </template>
       <template #cell-is_open="{ item }">
         <span class="pill-button" style="color: white;"

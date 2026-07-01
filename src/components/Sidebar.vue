@@ -16,6 +16,7 @@ import IconReportFilled from '@/assets/icons/IconReportFilled.vue'
 import IconLogout from '@/assets/icons/IconLogout.vue'
 import { useAuthStore } from '@/stores/authStore'
 import { useMeStore } from '@/stores/meStore'
+import { useReservationStore } from '@/stores/reservationStore'
 import IconProfile from '@/assets/icons/IconProfile.vue'
 import IconProfileFilled from '@/assets/icons/IconProfileFilled.vue'
 
@@ -51,6 +52,16 @@ async function closeMenu() {
 
 const meStore = useMeStore()
 const auth = useAuthStore()
+const reservationStore = useReservationStore()
+
+// Abre el modal de "Nueva reserva" desde cualquier vista y navega a /bookings
+async function openNewBooking() {
+  if (isMobile.value) await closeMenu()
+  if (route.path !== '/bookings') {
+    await router.push('/bookings')
+  }
+  reservationStore.openNewReservationModal()
+}
 
 // Items de navegación según el rol del usuario
 const items = computed(() => {
@@ -96,9 +107,9 @@ const subtitle = inject('SUBTITLE')
       </div>
     </div>
 
-    <ion-button class="primaryAction" expand="block" @click="router.push('/bookings'); isMobile && closeMenu()">
+    <ion-button class="primaryAction" expand="block" @click="openNewBooking">
       <span v-if="isCollapsed && !isMobile" class="primaryIcon">+</span>
-      <span v-show="showText">New Booking</span>
+      <span v-show="showText">Nueva reserva</span>
     </ion-button>
 
     <ion-list lines="none" class="nav-list">

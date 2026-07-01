@@ -1,5 +1,6 @@
 <script setup>
 import AppModal from '@/components/AppModal.vue'
+import { useDateFormat } from '@/composables/useDateFormat'
 
 const props = defineProps({
   show: {
@@ -23,10 +24,7 @@ const props = defineProps({
 const emit = defineEmits(['close'])
 
 // Formatea una fecha para mostrarla en pantalla
-function formatDate(value) {
-  if (!value) return '-'
-  return new Date(value).toLocaleDateString()
-}
+const { formatDDMMYYYY: formatDate } = useDateFormat()
 
 // Formatea un precio con dos decimales
 function formatPrice(value) {
@@ -63,17 +61,17 @@ function formatPrice(value) {
 
       <div class="detail-row">
         <span class="detail-label">Fecha de inicio</span>
-        <span class="detail-value">{{ formatDate(membership.start_date) }}</span>
+        <span class="detail-value">{{ formatDDMMYYYY(membership.start_date) }}</span>
       </div>
 
       <div class="detail-row">
         <span class="detail-label">Fecha de fin</span>
-        <span class="detail-value">{{ formatDate(membership.end_date) }}</span>
+        <span class="detail-value">{{ formatDDMMYYYY(membership.end_date) }}</span>
       </div>
 
       <div class="detail-row">
         <span class="detail-label">Fecha de contratación</span>
-        <span class="detail-value">{{ formatDate(membership.signed_at) }}</span>
+        <span class="detail-value">{{ formatDDMMYYYY(membership.signed_at) }}</span>
       </div>
 
       <div class="detail-row">

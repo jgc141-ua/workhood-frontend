@@ -66,12 +66,12 @@ function getItemKey(item, index) {
     <div class="table-scroll-area">
       <div class="data-table">
         <div class="data-table-head" :style="{ gridTemplateColumns }">
-          <div v-for="col in columns" :key="col.key">{{ col.label }}</div>
+          <div v-for="col in columns" :key="col.key" class="data-table-cell">{{ col.label }}</div>
         </div>
 
         <div v-for="(item, index) in items" :key="getItemKey(item, index)" class="data-table-row"
           :style="{ gridTemplateColumns }">
-          <div v-for="col in columns" :key="col.key">
+          <div v-for="col in columns" :key="col.key" class="data-table-cell">
             <slot :name="`cell-${col.key}`" :item="item" :index="index">
               {{ item[col.key] }}
             </slot>
@@ -110,6 +110,14 @@ function getItemKey(item, index) {
   gap: var(--space-4);
   align-items: center;
   padding: var(--space-3) var(--space-4);
+}
+
+.data-table-cell {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  min-width: 0;
 }
 
 .data-table-head {

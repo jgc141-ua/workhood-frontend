@@ -17,6 +17,7 @@ import { useInvoiceStore } from '@/stores/invoiceStore'
 import { usePaymentMethodStore } from '@/stores/paymentMethodStore'
 import { useAuthStore } from '@/stores/authStore'
 import { showToast } from '@/composables/toast'
+import { useDateFormat } from '@/composables/useDateFormat'
 
 const invoiceStore = useInvoiceStore()
 const paymentMethodStore = usePaymentMethodStore()
@@ -120,15 +121,12 @@ function nextPage() {
   if (invoiceStore.allNext) loadInvoices(invoiceStore.allPage + 1)
 }
 
-function formatDate(value) {
-  if (!value) return '-'
-  return new Date(value).toLocaleDateString('es-ES')
-}
-
 function formatPrice(value) {
   if (value == null) return '-'
   return `${Number(value).toFixed(2)} €`
 }
+
+const { formatDDMMYYYY, formatDDMMYYYYHHMM } = useDateFormat()
 
 function openPayModal(invoice) {
   invoiceToPay.value = invoice
@@ -251,11 +249,11 @@ onMounted(async () => {
         </template>
 
         <template #cell-issue_date="{ item }">
-          <div class="data-table-text">{{ formatDate(item.issue_date) }}</div>
+          <div class="data-table-text">{{ formatDDMMYYYYHHMM(item.issue_date) }}</div>
         </template>
 
         <template #cell-due_date="{ item }">
-          <div class="data-table-text">{{ formatDate(item.due_date) }}</div>
+          <div class="data-table-text">{{ formatDDMMYYYYHHMM(item.due_date) }}</div>
         </template>
 
         <template #cell-state="{ item }">

@@ -23,7 +23,7 @@ const resourceColumns = [
   { key: 'resource_type_name', label: 'TIPO', width: '1fr' },
   { key: 'capacity', label: 'CAPACIDAD', width: '1fr' },
   { key: 'price', label: 'PRECIO/HORA', width: '1fr' },
-  { key: 'status', label: 'ESTADO', width: '1fr' },
+  { key: 'is_bookable', label: 'RESERVABLE', width: '1.2fr' },
   { key: 'actions', label: '', width: 'auto' },
 ]
 
@@ -135,10 +135,10 @@ async function handleDelete() {
       :pagination="{ page: resourceStore.page, pageSize: resourceStore.pageSize, total: resourceStore.count }"
       @prev-page="resourceStore.setPage(resourceStore.page - 1)"
       @next-page="resourceStore.setPage(resourceStore.page + 1)">
-      <template #cell-status="{ item }">
+      <template #cell-is_bookable="{ item }">
         <span class="pill-button" style="color: white;"
-          :class="item.availability ? 'pill-button-success' : 'pill-button-warn'">
-          {{ item.availability ? 'Disponible' : 'No disponible' }}
+          :class="item.is_bookable ? 'pill-button-success' : 'pill-button-warn'">
+          {{ item.is_bookable ? 'Sí' : 'No' }}
         </span>
       </template>
       <template #cell-capacity="{ item }">

@@ -8,8 +8,10 @@ import PrettyInputSelector from '@/components/PrettyInputSelector.vue'
 import DataTablePagination from '@/components/DataTablePagination.vue'
 import { useAccessStore } from '@/stores/accessStore'
 import { showToast } from '@/composables/toast'
+import { useDateFormat } from '@/composables/useDateFormat'
 
 const accessStore = useAccessStore()
+const { formatDDMMYYYYHHMM } = useDateFormat()
 
 const selectedType = ref('all')
 const selectedResult = ref('all')
@@ -109,7 +111,7 @@ onMounted(() => {
               {{ access.membership.membership_type_name }}
               <span v-if="access.membership.resource_name">— {{ access.membership.resource_name }}</span>
             </p>
-            <p class="access-date">{{ access.event ? new Date(access.event).toLocaleString('es-ES') : '-' }}</p>
+            <p class="access-date">{{ formatDDMMYYYYHHMM(access.event) }}</p>
           </article>
         </div>
 

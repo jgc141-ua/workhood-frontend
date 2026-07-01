@@ -26,7 +26,7 @@ function parseDatetime(value) {
 function formatDateOnly(value) {
   const parsed = parseDatetime(value)
   if (!parsed) return '-'
-  return `${parsed.day}/${parsed.month}/${parsed.year}`
+  return `${parsed.day}-${parsed.month}-${parsed.year}`
 }
 
 function formatTimeOnly(value) {

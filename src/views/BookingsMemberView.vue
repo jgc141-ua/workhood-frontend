@@ -28,6 +28,7 @@ const selectedDate = ref(new Date().toISOString().split('T')[0])
 const activeTab = ref('new') // 'new' | 'my'
 const selectedState = ref('all')
 const selectedTime = ref('upcoming')
+const isNewReservationModalOpen = ref(false)
 
 const stateLabels = {
   Pending: 'Pendiente',
@@ -177,8 +178,32 @@ function closeReservationModal() {
   selectedBlock.value = null
 }
 
+// Abre el modal de "Nueva reserva" cuando se solicita desde el sidebar (sin preselección)
+function openNewReservation() {
+  isNewReservationModalOpen.value = true
+  activeTab.value = 'new'
+  reservationStore.closeNewReservationModal()
+}
+
+// Si el miembro pulsa el botón estando ya en /bookings
+watch(() => reservationStore.isNewReservationModalOpen, (isOpen) => {
+  if (isOpen) openNewReservation()
+})
+
+function closeNewReservationModal() {
+  isNewReservationModalOpen.value = false
+}
+
 async function onReserved() {
   closeReservationModal()
+  await Promise.all([
+    loadSchedules(),
+    loadMyReservations(),
+  ])
+}
+
+async function onNewReserved() {
+  closeNewReservationModal()
   await Promise.all([
     loadSchedules(),
     loadMyReservations(),
@@ -207,7 +232,13 @@ async function loadInitialData() {
   ])
 }
 
-onMounted(loadInitialData)
+onMounted(() => {
+  // Si la vista se monta con la petición ya pendiente (veníamos de otra ruta)
+  if (reservationStore.isNewReservationModalOpen) {
+    openNewReservation()
+  }
+  loadInitialData()
+})
 onIonViewWillEnter(loadInitialData)
 </script>
 
@@ -240,6 +271,11 @@ onIonViewWillEnter(loadInitialData)
         :initial-start-time="selectedBlock ? formatTimeForInput(selectedDate, selectedBlock.start_time) : ''"
         :initial-end-time="selectedBlock ? formatTimeForInput(selectedDate, selectedBlock.end_time) : ''"
         @reserved="onReserved" @cancel="closeReservationModal" />
+    </AppModal>
+
+    <AppModal :show="isNewReservationModalOpen" title="Nueva reserva" @close="closeNewReservationModal">
+      <ReservationForm :key="`new-reservation-${isNewReservationModalOpen}`" :initial-date="selectedDate"
+        @reserved="onNewReserved" @cancel="closeNewReservationModal" />
     </AppModal>
 
     <ConfirmModal :show="reservationStore.isCancelModalOpen" title="Cancelar reserva"
@@ -324,7 +360,7 @@ onIonViewWillEnter(loadInitialData)
                 Pendiente de pago
               </span>
               <span class="reservation-pill">{{ typeLabels[reservation.reservation_type] || reservation.reservation_type
-                }}</span>
+              }}</span>
             </div>
           </div>
 

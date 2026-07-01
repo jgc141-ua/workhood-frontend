@@ -2,6 +2,7 @@
 import AppModal from '@/components/AppModal.vue'
 import { useInvoiceStore } from '@/stores/invoiceStore'
 import { showToast } from '@/composables/toast'
+import { useDateFormat } from '@/composables/useDateFormat'
 
 const props = defineProps({
   show: { type: Boolean, default: false },
@@ -30,15 +31,12 @@ const stateLabels = {
   ANULADA: 'Anulada',
 }
 
-function formatDateTime(value) {
-  if (!value) return '-'
-  return new Date(value).toLocaleString('es-ES')
-}
-
 function formatPrice(value) {
   if (value == null) return '-'
   return `${Number(value).toFixed(2)} €`
 }
+
+const { formatDDMMYYYY, formatDDMMYYYYHHMM } = useDateFormat()
 </script>
 
 <template>
@@ -71,6 +69,22 @@ function formatPrice(value) {
               </span>
             </span>
           </div>
+        </div>
+      </div>
+
+      <div class="detail-section">
+        <div class="detail-row">
+          <span class="detail-label">Fecha de emisión</span>
+          <span class="detail-value">{{ formatDDMMYYYYHHMM(invoice.issue_date) }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Fecha de vencimiento</span>
+          <span class="detail-value">{{ formatDDMMYYYYHHMM(invoice.due_date) }}</span>
+        </div>
+        <div v-if="invoice.membership && invoice.period_start && invoice.period_end" class="detail-row">
+          <span class="detail-label">Periodo</span>
+          <span class="detail-value">{{ formatDDMMYYYY(invoice.period_start) }} - {{ formatDDMMYYYY(invoice.period_end)
+            }}</span>
         </div>
       </div>
 
@@ -123,7 +137,7 @@ function formatPrice(value) {
           <div>
             <p class="detail-text">{{ formatPrice(payment.amount) }}</p>
             <p class="detail-subtext">
-              {{ payment.method_name }} · {{ formatDateTime(payment.payment_date) }}
+              {{ payment.method_name }} · {{ formatDDMMYYYYHHMM(payment.payment_date) }}
             </p>
           </div>
           <span class="detail-item-subtotal">{{ payment.registered_by_email }}</span>
